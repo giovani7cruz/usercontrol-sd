@@ -31,6 +31,7 @@ requires
   dbrtl;
 
 contains
-  UCDataConnector in '..\..\Source\Base\UCDataConnector.pas';
+  UCDataConnector in '..\..\Source\Base\UCDataConnector.pas',
+  UCConnectionAdapter in '..\..\Source\Base\UCConnectionAdapter.pas';
 
 end.

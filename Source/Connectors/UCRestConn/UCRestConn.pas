@@ -238,7 +238,7 @@ var
 begin
   FList := DSClient.GetDataSet2(FSQL, '');
 
-  Result := TFDMemTable.Create(Self);
+  Result := TFDMemTable.Create(nil);
   Result.Close;
 
   (Result as TFDMemTable).SQL.Text := FSQL;

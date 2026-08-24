@@ -309,7 +309,7 @@ end;
 
 function TUCMidasConn.UCGetSQLDataset(FSQL: String): TDataset;
 begin
-  Result := TClientDataSet.Create(Self);
+  Result := TClientDataSet.Create(nil);
 
   with TClientDataSet(Result) do
   begin

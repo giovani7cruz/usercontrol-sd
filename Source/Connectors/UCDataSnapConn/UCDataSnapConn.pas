@@ -284,7 +284,7 @@ begin
 
   if (Connection.Connected) then
   begin
-    Result := TClientDataSet.Create(Self);
+    Result := TClientDataSet.Create(nil);
     (Result as TClientDataSet).SQL.Text := FSQL;
 
     TClientDataSet(Result).RemoteServer := Self.RemoteServer;

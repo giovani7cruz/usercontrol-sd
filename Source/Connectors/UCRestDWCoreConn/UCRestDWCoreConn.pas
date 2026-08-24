@@ -288,7 +288,7 @@ var
   vDataSet : TRESTDWClientSQL;
 begin
   CheckDataBase;
-  vDataSet := TRESTDWClientSQL.Create(Self);
+  vDataSet := TRESTDWClientSQL.Create(nil);
 
   try
     vDataSet.Close;

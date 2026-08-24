@@ -91,6 +91,7 @@ type
     procedure ValidateDataSet(DataSet: TDataSet; const OperationName: String);
   public
     procedure UCExecSQL(FSQL: String); virtual; abstract;
+    // O chamador e responsavel por liberar o DataSet retornado.
     function UCGetSQLDataset(FSQL: String): TDataset; dynamic; abstract;
     function UCFindTable(const Tablename: String): Boolean; virtual; abstract;
     function UCFindFieldTable(const Tablename, FieldName: String): Boolean; virtual; abstract;
