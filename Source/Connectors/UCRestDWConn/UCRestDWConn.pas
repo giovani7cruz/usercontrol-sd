@@ -87,6 +87,8 @@ type
   private
     FSchema: String;
     FDataBase: TRESTDataBase;
+    procedure CheckDataBase;
+    procedure SetDataBase(const Value: TRESTDataBase);
   protected
     procedure Notification(AComponent: TComponent;
       Operation: TOperation); override;
@@ -104,7 +106,7 @@ type
     procedure CloseDataSet(DataSet : TDataSet); override;
     procedure OpenDataSet(DataSet : TDataSet); override;
   published
-    property DataBase : TRESTDataBase read FDataBase write FDataBase;
+    property DataBase : TRESTDataBase read FDataBase write SetDataBase;
     property SchemaName: String read FSchema write FSchema;
 
   end;
@@ -115,7 +117,14 @@ implementation
 
 procedure TUCRestDWConn.CloseDataSet(DataSet: TDataSet);
 begin
+  ValidateDataSet(DataSet, 'CloseDataSet');
   (DataSet as TRESTClientSQL).Close;
+end;
+
+procedure TUCRestDWConn.CheckDataBase;
+begin
+  if not Assigned(FDataBase) then
+    raise Exception.Create('DataBase do connector RESTDataWare nao informado');
 end;
 
 constructor TUCRestDWConn.Create(AOwner: TComponent);
@@ -126,7 +135,7 @@ end;
 
 destructor TUCRestDWConn.Destroy;
 begin
-
+  SetDataBase(nil);
   inherited;
 end;
 
@@ -134,7 +143,7 @@ function TUCRestDWConn.GetDBObjectName: String;
 begin
   if Assigned(FDataBase) then
   begin
-    if Owner = FDataBase.Owner then
+    if (not Assigned(FDataBase.Owner)) or (Owner = FDataBase.Owner) then
       Result := FDataBase.Name
     else
       Result := FDataBase.Owner.Name + '.' + FDataBase.Name;
@@ -158,7 +167,19 @@ end;
 
 procedure TUCRestDWConn.OpenDataSet(DataSet: TDataSet);
 begin
+  ValidateDataSet(DataSet, 'OpenDataSet');
   (DataSet as TRESTClientSQL).Open;
+end;
+
+procedure TUCRestDWConn.SetDataBase(const Value: TRESTDataBase);
+begin
+  if FDataBase = Value then
+    Exit;
+  if Assigned(FDataBase) then
+    FDataBase.RemoveFreeNotification(Self);
+  FDataBase := Value;
+  if Assigned(FDataBase) then
+    FDataBase.FreeNotification(Self);
 end;
 
 procedure TUCRestDWConn.OrderBy(const DataSet: TDataSet;
@@ -198,8 +219,7 @@ var
   vDataSet : TRESTClientSQL;
   vError : string;
 begin
-  inherited;
-
+  CheckDataBase;
   vError := EmptyStr;
   vDataSet := TRESTClientSQL.Create(Self);
 
@@ -237,6 +257,7 @@ function TUCRestDWConn.UCGetSQLDataset(FSQL: String): TDataset;
 var
   vDataSet : TRESTClientSQL;
 begin
+  CheckDataBase;
   vDataSet := TRESTClientSQL.Create(Self);
 
   try

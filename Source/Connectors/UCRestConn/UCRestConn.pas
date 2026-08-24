@@ -137,8 +137,6 @@ implementation
 procedure TUCRestConn.CloseDataSet(DataSet: TDataSet);
 begin
   inherited;
-
-  DataSet.Close;
 end;
 
 constructor TUCRestConn.Create(AOwner: TComponent);
@@ -175,7 +173,6 @@ end;
 procedure TUCRestConn.Notification(AComponent: TComponent;
   Operation: TOperation);
 begin
-  inherited;
   if (Operation = opRemove) and (AComponent = FConnection) then
     FConnection := nil;
   inherited Notification(AComponent, Operation);
@@ -213,7 +210,6 @@ end;
 
 procedure TUCRestConn.UCExecSQL(FSQL: String);
 begin
-  inherited;
   DSClient.ExecuteSQL(FSQL);
 end;
 

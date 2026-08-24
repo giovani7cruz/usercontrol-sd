@@ -202,7 +202,8 @@ begin
   except
     on E: Exception do
     begin
-      if not ((Pos(E.Message, 'Table unknown') = 0) or (Pos(E.Message, 'Column unknown') = 0)) then
+      if (Pos('TABLE UNKNOWN', UpperCase(E.Message)) = 0) and
+        (Pos('COLUMN UNKNOWN', UpperCase(E.Message)) = 0) then
         raise;
     end;
   end;

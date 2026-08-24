@@ -69,7 +69,9 @@ type
   private
     FSchema: String;
     FDataBase: TRESTDWDataBase;
+    procedure CheckDataBase;
     function GetAbout: string;
+    procedure SetDataBase(const Value: TRESTDWDataBase);
   protected
     procedure Notification(AComponent: TComponent;
       Operation: TOperation); override;
@@ -87,7 +89,7 @@ type
     procedure CloseDataSet(DataSet : TDataSet); override;
     procedure OpenDataSet(DataSet : TDataSet); override;
   published
-    property DataBase : TRESTDWDataBase read FDataBase write FDataBase;
+    property DataBase : TRESTDWDataBase read FDataBase write SetDataBase;
     property SchemaName: String read FSchema write FSchema;
     property About : string read GetAbout;
   end;
@@ -98,7 +100,14 @@ implementation
 
 procedure TUCRestDWCoreConn.CloseDataSet(DataSet: TDataSet);
 begin
+  ValidateDataSet(DataSet, 'CloseDataSet');
   (DataSet as TRESTDWClientSQL).Close;
+end;
+
+procedure TUCRestDWCoreConn.CheckDataBase;
+begin
+  if not Assigned(FDataBase) then
+    raise Exception.Create('DataBase do connector RESTDataWare Core nao informado');
 end;
 
 constructor TUCRestDWCoreConn.Create(AOwner: TComponent);
@@ -110,7 +119,7 @@ end;
 
 destructor TUCRestDWCoreConn.Destroy;
 begin
-
+  SetDataBase(nil);
   inherited;
 end;
 
@@ -123,7 +132,7 @@ function TUCRestDWCoreConn.GetDBObjectName: String;
 begin
   if Assigned(FDataBase) then
   begin
-    if Owner = FDataBase.Owner then
+    if (not Assigned(FDataBase.Owner)) or (Owner = FDataBase.Owner) then
       Result := FDataBase.Name
     else
       Result := FDataBase.Owner.Name + '.' + FDataBase.Name;
@@ -150,7 +159,19 @@ end;
 
 procedure TUCRestDWCoreConn.OpenDataSet(DataSet: TDataSet);
 begin
+  ValidateDataSet(DataSet, 'OpenDataSet');
   (DataSet as TRESTDWClientSQL).Open;
+end;
+
+procedure TUCRestDWCoreConn.SetDataBase(const Value: TRESTDWDataBase);
+begin
+  if FDataBase = Value then
+    Exit;
+  if Assigned(FDataBase) then
+    FDataBase.RemoveFreeNotification(Self);
+  FDataBase := Value;
+  if Assigned(FDataBase) then
+    FDataBase.FreeNotification(Self);
 end;
 
 procedure TUCRestDWCoreConn.OrderBy(const DataSet: TDataSet;
@@ -194,8 +215,7 @@ var
   vDataSet : TRESTDWClientSQL;
   vError : string;
 begin
-  inherited;
-
+  CheckDataBase;
   vError := EmptyStr;
   vDataSet := TRESTDWClientSQL.Create(Self);
 
@@ -223,6 +243,7 @@ function TUCRestDWCoreConn.UCFindFieldTable(const Tablename,
 var
   vList : TStringList;
 begin
+  CheckDataBase;
   vList := TStringList.Create;
 
   try
@@ -244,6 +265,7 @@ function TUCRestDWCoreConn.UCFindTable(const Tablename: String): Boolean;
 var
   vList : TStringList;
 begin
+  CheckDataBase;
   vList := TStringList.Create;
 
   try
@@ -265,6 +287,7 @@ function TUCRestDWCoreConn.UCGetSQLDataset(FSQL: String): TDataset;
 var
   vDataSet : TRESTDWClientSQL;
 begin
+  CheckDataBase;
   vDataSet := TRESTDWClientSQL.Create(Self);
 
   try

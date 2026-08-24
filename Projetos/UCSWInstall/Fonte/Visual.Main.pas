@@ -186,7 +186,6 @@ type
     procedure AddLibrarySearchPath;
     procedure OutputCallLine(const Text: string);
     procedure SetPlatformSelected;
-    function IsCheckOutJaFeito(const ADiretorio: String): Boolean;
     procedure CreateDirectoryLibrarysNotExist;
     procedure GravarConfiguracoes;
     procedure LerConfiguracoes;
@@ -196,10 +195,11 @@ type
     procedure ExtrairDiretorioPacote(NomePacote: string);
     procedure AddLibraryPathToDelphiPath(const APath: String;
       const AProcurarRemover: String);
-    procedure FindDirs(ADirRoot: String; bAdicionar: Boolean = True);
+    procedure FindDirs(ADirRoot: String; APlatform: TJclBDSPlatform;
+      bAdicionar: Boolean = True);
+    function LibraryDirectory(APlatform: TJclBDSPlatform): String;
     procedure DeixarSomenteLib;
-    function RunAsAdminAndWaitForCompletion(hWnd: HWND; filename: string): Boolean;
-    procedure WriteToTXT(const ArqTXT, AString: AnsiString;
+    procedure WriteToTXT(const ArqTXT, AString: String;
       const AppendIfExists: Boolean = True; AddLineBreak: Boolean = True);
 
   public
@@ -213,20 +213,20 @@ implementation
 {$R *.dfm}
 
 uses
-{$WARNINGS off} FileCtrl, {$WARNINGS on} ShellApi, IniFiles, StrUtils, Math,
-  Registry, System.Types, System.IOUtils, Clipbrd;
+{$WARNINGS off} FileCtrl, {$WARNINGS on} ShellApi, IniFiles, StrUtils,
+  System.Types, System.IOUtils, Clipbrd;
 
 procedure TFrmPrincipal.AddLibraryPathToDelphiPath(const APath,
   AProcurarRemover: String);
 const
   cs: PChar = 'Environment Variables';
 var
-  lParam, wParam: Integer;
-  aResult: Cardinal;
+  MessageLParam: LPARAM;
+  MessageWParam: WPARAM;
+  BroadcastResult: DWORD_PTR;
   ListaPaths: TStringList;
   I: Integer;
   PathsAtuais: String;
-  PathFonte: string;
 begin
   with oUserControl.Installations[iVersion] do
   begin
@@ -261,11 +261,13 @@ begin
       ConfigData.WriteString(cs, 'PATH', ListaPaths.DelimitedText);
 
       // enviar um broadcast de atualização para o windows
-      wParam := 0;
-      lParam := LongInt(cs);
-      SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, wParam, lParam, SMTO_NORMAL, 4000, aResult);
-      if aResult <> 0 then
-        raise Exception.create('Ocorreu um erro ao tentar configurar o path: ' + SysErrorMessage(aResult));
+      MessageWParam := 0;
+      MessageLParam := LPARAM(cs);
+      BroadcastResult := 0;
+      // O valor em BroadcastResult pertence ao processamento da mensagem e não é
+      // um código de erro do Windows. A configuração já foi persistida acima.
+      SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, MessageWParam,
+        MessageLParam, SMTO_ABORTIFHUNG, 4000, @BroadcastResult);
     finally
       ListaPaths.Free;
     end;
@@ -273,33 +275,65 @@ begin
 end;
 
 procedure TFrmPrincipal.AddLibrarySearchPath;
+var
+  SourceDirectory: String;
+  LibraryWin32: String;
+  LibraryWin64: String;
+  ConfigureWin64: Boolean;
 begin
-  FindDirs(IncludeTrailingPathDelimiter(sDirRoot) + 'Source');
+  SourceDirectory := IncludeTrailingPathDelimiter(sDirRoot) + 'Source';
+  LibraryWin32 := LibraryDirectory(bpWin32);
+  LibraryWin64 := LibraryDirectory(bpWin64);
+  ConfigureWin64 := oUserControl.Installations[iVersion].VersionNumber >= 16;
 
-  // --
+  if not System.SysUtils.ForceDirectories(LibraryWin32) then
+    raise Exception.CreateFmt('Não foi possível criar o diretório "%s".',
+      [LibraryWin32]);
+
+  FindDirs(SourceDirectory, bpWin32);
   with oUserControl.Installations[iVersion] do
   begin
-    AddToLibraryBrowsingPath(sDirLibrary, tPlatform);
-    AddToLibrarySearchPath(sDirLibrary, tPlatform);
-    AddToDebugDCUPath(sDirLibrary, tPlatform);
+    AddToLibraryBrowsingPath(LibraryWin32, bpWin32);
+    AddToLibrarySearchPath(LibraryWin32, bpWin32);
+    AddToDebugDCUPath(LibraryWin32, bpWin32);
   end;
 
-  // -- adicionar a library path ao path do windows
-  AddLibraryPathToDelphiPath(sDirLibrary, 'UserControl');
-
-  //-- ************ C++ Builder *************** //
-  if ckbBCB.Checked then
+  if ConfigureWin64 then
   begin
-     if oUserControl.Installations[iVersion] is TJclBDSInstallation then
-     begin
-        with TJclBDSInstallation(oUserControl.Installations[iVersion]) do
-        begin
-           AddToCppSearchPath(sDirLibrary, tPlatform);
-           AddToCppLibraryPath(sDirLibrary, tPlatform);
-           AddToCppBrowsingPath(sDirLibrary, tPlatform);
-           AddToCppIncludePath(sDirLibrary, tPlatform);
-        end;
-     end;
+    if not System.SysUtils.ForceDirectories(LibraryWin64) then
+      raise Exception.CreateFmt('Não foi possível criar o diretório "%s".',
+        [LibraryWin64]);
+
+    FindDirs(SourceDirectory, bpWin64);
+    with oUserControl.Installations[iVersion] do
+    begin
+      AddToLibraryBrowsingPath(LibraryWin64, bpWin64);
+      AddToLibrarySearchPath(LibraryWin64, bpWin64);
+      AddToDebugDCUPath(LibraryWin64, bpWin64);
+    end;
+  end;
+
+  // A IDE é Win32 e deve localizar apenas os BPLs de design-time Win32.
+  AddLibraryPathToDelphiPath(LibraryWin32, 'UserControl');
+
+  if ckbBCB.Checked and
+    (oUserControl.Installations[iVersion] is TJclBDSInstallation) then
+  begin
+    with TJclBDSInstallation(oUserControl.Installations[iVersion]) do
+    begin
+      AddToCppSearchPath(LibraryWin32, bpWin32);
+      AddToCppLibraryPath(LibraryWin32, bpWin32);
+      AddToCppBrowsingPath(LibraryWin32, bpWin32);
+      AddToCppIncludePath(LibraryWin32, bpWin32);
+
+      if ConfigureWin64 then
+      begin
+        AddToCppSearchPath(LibraryWin64, bpWin64);
+        AddToCppLibraryPath(LibraryWin64, bpWin64);
+        AddToCppBrowsingPath(LibraryWin64, bpWin64);
+        AddToCppIncludePath(LibraryWin64, bpWin64);
+      end;
+    end;
   end;
 end;
 
@@ -315,9 +349,9 @@ begin
   // -B = Build all units
   Sender.Options.Add('-B');
   // O+ = Optimization
-  Sender.Options.Add('-$O-');
+  Sender.Options.Add('-$O+');
   // W- = Generate stack frames
-  Sender.Options.Add('-$W+');
+  Sender.Options.Add('-$W-');
   // Y+ = Symbol reference info
   Sender.Options.Add('-$Y-');
   // -M = Make modified units
@@ -393,9 +427,9 @@ end;
 // criação dos diretórios necessários
 procedure TfrmPrincipal.CreateDirectoryLibrarysNotExist;
 begin
-  // Checa se existe diretório da plataforma
-  if not DirectoryExists(sDirLibrary) then
-    ForceDirectories(sDirLibrary);
+  if not System.SysUtils.ForceDirectories(sDirLibrary) then
+    raise Exception.CreateFmt('Não foi possível criar o diretório "%s".',
+      [sDirLibrary]);
 end;
 
 procedure TFrmPrincipal.DeixarSomenteLib;
@@ -409,12 +443,13 @@ procedure Copiar(const Extensao : string);
     for i := Low(ListArquivos) to High(ListArquivos) do
     begin
       Arquivo := ExtractFileName(ListArquivos[i]);
-      CopyFile(PWideChar(ListArquivos[i]), PWideChar(IncludeTrailingPathDelimiter(sDirLibrary) + Arquivo), True);
+      TFile.Copy(ListArquivos[i],
+        IncludeTrailingPathDelimiter(sDirLibrary) + Arquivo, True);
     end;
   end;
 begin
   // remover os path com o segundo parametro
-  FindDirs(IncludeTrailingPathDelimiter(sDirRoot) + 'Source', False);
+  FindDirs(IncludeTrailingPathDelimiter(sDirRoot) + 'Source', tPlatform, False);
 
   Copiar('*.dcr');
   Copiar('*.res');
@@ -544,6 +579,13 @@ begin
 
       if (IsDelphiPackage(NomePacote)) and (frameDpk.Pacotes[iDpk].Checked) then
       begin
+        if sDirPackage = '' then
+        begin
+          Inc(FCountErros);
+          Logar(Format('Pacote "%s" não foi encontrado.', [NomePacote]));
+          Break;
+        end;
+
         WriteToTXT(PathArquivoLog, '');
 
         if oUserControl.Installations[iVersion].CompilePackage(sDirPackage + NomePacote, sDirLibrary, sDirLibrary) then
@@ -582,6 +624,13 @@ begin
 
           if IsDelphiPackage(NomePacote) then
           begin
+            if sDirPackage = '' then
+            begin
+              Inc(FCountErros);
+              Logar(Format('Pacote "%s" não foi encontrado.', [NomePacote]));
+              Break;
+            end;
+
             // instalar somente os pacotes de designtime
             GetDPKFileInfo(sDirPackage + NomePacote, bRunOnly);
             if not bRunOnly then
@@ -605,8 +654,13 @@ begin
               begin
                 WriteToTXT(PathArquivoLog, '');
 
-                if oUserControl.Installations[iVersion].UninstallPackage(sDirPackage + NomePacote, sDirLibrary, sDirLibrary) then
-                  Logar(Format('Pacote "%s" removido com sucesso...', [NomePacote]));
+                if oUserControl.Installations[iVersion].UninstallPackage(
+                  sDirPackage + NomePacote, sDirLibrary, sDirLibrary) then
+                  Logar(Format('Pacote "%s" removido com sucesso.', [NomePacote]))
+                else
+                  Logar(Format(
+                    'Pacote "%s" não estava instalado; nenhuma remoção necessária.',
+                    [NomePacote]));
               end;
             end;
           end;
@@ -648,7 +702,10 @@ begin
         except
           on E: Exception do
           begin
-            MostrarMensagemInstalado('Ocorreu erro ao limpas os path e copiar arquivos' + sLineBreak +E.Message )
+            Inc(FCountErros);
+            MostrarMensagemInstalado(
+              'Erro ao limpar os paths e copiar arquivos:' + sLineBreak +
+              E.Message);
           end;
         end;
       end;
@@ -691,13 +748,20 @@ end;
 
 procedure TFrmPrincipal.edtDelphiVersionChange(Sender: TObject);
 begin
-  iVersion := edtDelphiVersion.ItemIndex;
+  if edtDelphiVersion.ItemIndex < 0 then
+  begin
+    iVersion := -1;
+    Exit;
+  end;
+
+  iVersion := NativeInt(
+    edtDelphiVersion.Items.Objects[edtDelphiVersion.ItemIndex]);
   sPathBin := IncludeTrailingPathDelimiter(oUserControl.Installations[iVersion]
     .BinFolderName);
   // -- Plataforma só habilita para Delphi XE2
   // -- Desabilita para versão diferente de Delphi XE2
-  edtPlatform.Enabled := oUserControl.Installations[iVersion].VersionNumber >= 9;
-  if oUserControl.Installations[iVersion].VersionNumber < 9 then
+  edtPlatform.Enabled := oUserControl.Installations[iVersion].VersionNumber >= 16;
+  if oUserControl.Installations[iVersion].VersionNumber < 16 then
     edtPlatform.ItemIndex := 0;
 
   // C++ Builder a partir do D2006, versões anteriores tem IDE independentes.
@@ -712,11 +776,12 @@ procedure TFrmPrincipal.ExtrairDiretorioPacote(NomePacote: string);
   procedure FindDirPackage(sDir, sPacote: String);
   var
     oDirList: TSearchRec;
-    iRet: Integer;
-    sDirDpk: string;
   begin
+    if sDirPackage <> '' then
+      Exit;
+
     sDir := IncludeTrailingPathDelimiter(sDir);
-    if not DirectoryExists(sDir) then
+    if not System.SysUtils.DirectoryExists(sDir) then
       Exit;
 
     if System.SysUtils.FindFirst(sDir + '*.*', faAnyFile, oDirList) = 0 then
@@ -728,12 +793,15 @@ procedure TFrmPrincipal.ExtrairDiretorioPacote(NomePacote: string);
             Continue;
 
           //if oDirList.Attr = faDirectory then
-          if DirectoryExists(sDir + oDirList.Name) then
+          if System.SysUtils.DirectoryExists(sDir + oDirList.Name) then
             FindDirPackage(sDir + oDirList.Name, sPacote)
           else
           begin
-            if oDirList.Name = sPacote then
+            if SameText(oDirList.Name, sPacote) then
+            begin
               sDirPackage := IncludeTrailingPathDelimiter(sDir);
+              Exit;
+            end;
           end;
 
         until System.SysUtils.FindNext(oDirList) <> 0;
@@ -749,7 +817,8 @@ begin
   FindDirPackage(sDirRoot + 'Packages\', NomePacote);
 end;
 
-procedure TFrmPrincipal.FindDirs(ADirRoot: String; bAdicionar: Boolean);
+procedure TFrmPrincipal.FindDirs(ADirRoot: String;
+  APlatform: TJclBDSPlatform; bAdicionar: Boolean);
 var
   oDirList: TSearchRec;
 
@@ -759,15 +828,12 @@ var
       'quick', 'rave', 'laz', 'VerificarNecessidade', '__history'
     );
   var
-    Str: String;
+    ForbiddenName: String;
   begin
+    for ForbiddenName in LISTA_PROIBIDOS do
+      if ContainsText(ADir, ForbiddenName) then
+        Exit(True);
     Result := False;
-    for str in LISTA_PROIBIDOS do
-    begin
-      Result := Pos(AnsiUpperCase(str), AnsiUpperCase(ADir)) > 0;
-      if Result then
-        Break;
-    end;
   end;
 
 begin
@@ -786,14 +852,14 @@ begin
              begin
                if bAdicionar then
                begin
-                  AddToLibrarySearchPath(ADirRoot + oDirList.Name, tPlatform);
-                  AddToLibraryBrowsingPath(ADirRoot + oDirList.Name, tPlatform);
+                  AddToLibrarySearchPath(ADirRoot + oDirList.Name, APlatform);
+                  AddToLibraryBrowsingPath(ADirRoot + oDirList.Name, APlatform);
                end
                else
-                  RemoveFromLibrarySearchPath(ADirRoot + oDirList.Name, tPlatform);
+                  RemoveFromLibrarySearchPath(ADirRoot + oDirList.Name, APlatform);
              end;
              //-- Procura subpastas
-             FindDirs(ADirRoot + oDirList.Name, bAdicionar);
+             FindDirs(ADirRoot + oDirList.Name, APlatform, bAdicionar);
           end;
        until FindNext(oDirList) <> 0;
      finally
@@ -822,55 +888,55 @@ begin
   for iFor := 0 to oUserControl.Count - 1 do
   begin
     if oUserControl.Installations[iFor].VersionNumberStr = 'd3' then
-      edtDelphiVersion.Items.Add('Delphi 3')
+      edtDelphiVersion.Items.AddObject('Delphi 3', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd4' then
-      edtDelphiVersion.Items.Add('Delphi 4')
+      edtDelphiVersion.Items.AddObject('Delphi 4', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd5' then
-      edtDelphiVersion.Items.Add('Delphi 5')
+      edtDelphiVersion.Items.AddObject('Delphi 5', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd6' then
-      edtDelphiVersion.Items.Add('Delphi 6')
+      edtDelphiVersion.Items.AddObject('Delphi 6', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd7' then
-      edtDelphiVersion.Items.Add('Delphi 7')
+      edtDelphiVersion.Items.AddObject('Delphi 7', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd9' then
-      edtDelphiVersion.Items.Add('Delphi 2005')
+      edtDelphiVersion.Items.AddObject('Delphi 2005', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd10' then
-      edtDelphiVersion.Items.Add('Delphi 2006')
+      edtDelphiVersion.Items.AddObject('Delphi 2006', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd11' then
-      edtDelphiVersion.Items.Add('Delphi 2007')
+      edtDelphiVersion.Items.AddObject('Delphi 2007', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd12' then
-      edtDelphiVersion.Items.Add('Delphi 2009')
+      edtDelphiVersion.Items.AddObject('Delphi 2009', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd14' then
-      edtDelphiVersion.Items.Add('Delphi 2010')
+      edtDelphiVersion.Items.AddObject('Delphi 2010', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd15' then
-      edtDelphiVersion.Items.Add('Delphi XE')
+      edtDelphiVersion.Items.AddObject('Delphi XE', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd16' then
-      edtDelphiVersion.Items.Add('Delphi XE2')
+      edtDelphiVersion.Items.AddObject('Delphi XE2', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd17' then
-      edtDelphiVersion.Items.Add('Delphi XE3')
+      edtDelphiVersion.Items.AddObject('Delphi XE3', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd18' then
-      edtDelphiVersion.Items.Add('Delphi XE4')
+      edtDelphiVersion.Items.AddObject('Delphi XE4', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd19' then
-      edtDelphiVersion.Items.Add('Delphi XE5')
+      edtDelphiVersion.Items.AddObject('Delphi XE5', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd20' then
-      edtDelphiVersion.Items.Add('Delphi XE6')
+      edtDelphiVersion.Items.AddObject('Delphi XE6', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd21' then
-      edtDelphiVersion.Items.Add('Delphi XE7')
+      edtDelphiVersion.Items.AddObject('Delphi XE7', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd22' then
-      edtDelphiVersion.Items.Add('Delphi XE8')
+      edtDelphiVersion.Items.AddObject('Delphi XE8', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd23' then
-      edtDelphiVersion.Items.Add('Delphi 10 Seattle')
+      edtDelphiVersion.Items.AddObject('Delphi 10 Seattle', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd24' then
-      edtDelphiVersion.Items.Add('Delphi 10.1 Berlin')
+      edtDelphiVersion.Items.AddObject('Delphi 10.1 Berlin', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd25' then
-      edtDelphiVersion.Items.Add('Delphi 10.2 Tokyo')
+      edtDelphiVersion.Items.AddObject('Delphi 10.2 Tokyo', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd26' then
-      edtDelphiVersion.Items.Add('Delphi 10.3 Rio')
+      edtDelphiVersion.Items.AddObject('Delphi 10.3 Rio', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd27' then
-      edtDelphiVersion.Items.Add('Delphi 10.4 Sydney')
+      edtDelphiVersion.Items.AddObject('Delphi 10.4 Sydney', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd28' then
-      edtDelphiVersion.Items.Add('Delphi 11 Alexandria')
+      edtDelphiVersion.Items.AddObject('Delphi 11 Alexandria', TObject(NativeInt(iFor)))
     else if oUserControl.Installations[iFor].VersionNumberStr = 'd29' then   // 04/06/2024 - Kellson Nunes Rocha: Foi acrescentado a versão d29 athens para o matchtext
-      edtDelphiVersion.Items.Add('Delphi 12 Athens');
+      edtDelphiVersion.Items.AddObject('Delphi 12 Athens', TObject(NativeInt(iFor)));
 
     // -- Evento disparado antes de iniciar a execução do processo.
     oUserControl.Installations[iFor].DCC32.OnBeforeExecute := BeforeExecute;
@@ -879,12 +945,17 @@ begin
     oUserControl.Installations[iFor].OutputCallback := OutputCallLine;
   end;
 
-  if edtDelphiVersion.Items.Count > 0 then
+  if edtDelphiVersion.Items.Count = 0 then
   begin
-    edtDelphiVersion.ItemIndex := 0;
-    iVersion := 0;
+    btnInstalar.Enabled := False;
+    Application.MessageBox(
+      'Nenhuma versão compatível do Delphi foi encontrada.',
+      'Instalador UserControl', MB_OK + MB_ICONERROR);
+    Exit;
   end;
 
+  edtDelphiVersion.ItemIndex := 0;
+  iVersion := NativeInt(edtDelphiVersion.Items.Objects[0]);
   LerConfiguracoes;
 end;
 
@@ -908,16 +979,9 @@ begin
   end;
 end;
 
-// verificar se no caminho informado já existe o .svn indicando que o
-// checkout já foi feito no diretorio
 procedure TFrmPrincipal.Image1Click(Sender: TObject);
 begin
   ShellExecute(Handle, 'open', PWideChar(lblUrlUserControl1.Caption), '', '', 1);
-end;
-
-function TfrmPrincipal.IsCheckOutJaFeito(const ADiretorio: String): Boolean;
-begin
-  Result := DirectoryExists(IncludeTrailingPathDelimiter(ADiretorio) + '.svn')
 end;
 
 procedure TFrmPrincipal.lblUrlPIXClick(Sender: TObject);
@@ -949,48 +1013,56 @@ end;
 
 procedure TFrmPrincipal.wizPgConfiguracaoNextButtonClick(Sender: TObject;
   var Stop: Boolean);
+var
+  RootDirectory: String;
 begin
-  // verificar se foi informado o diretório
-  if Trim(edtDirDestino.Text) = EmptyStr then
+  Stop := True;
+  RootDirectory := IncludeTrailingPathDelimiter(Trim(edtDirDestino.Text));
+
+  if RootDirectory = '' then
   begin
-    Stop := True;
+    edtDirDestino.SetFocus;
+    Application.MessageBox('Diretório de instalação não foi informado.',
+      'Erro.', MB_OK + MB_ICONERROR);
+    Exit;
+  end;
+
+  if not System.SysUtils.DirectoryExists(RootDirectory) then
+  begin
+    edtDirDestino.SetFocus;
+    Application.MessageBox('O diretório de instalação não existe.',
+      'Erro.', MB_OK + MB_ICONERROR);
+    Exit;
+  end;
+
+  if not System.SysUtils.DirectoryExists(RootDirectory + 'Source') or
+    not System.SysUtils.DirectoryExists(RootDirectory + 'Packages') then
+  begin
     edtDirDestino.SetFocus;
     Application.MessageBox(
-      'Diretório de instalação não foi informado.',
-      'Erro.',
-      MB_OK + MB_ICONERROR
-    );
+      'O diretório informado não contém as pastas Source e Packages.',
+      'Erro.', MB_OK + MB_ICONERROR);
+    Exit;
   end;
 
-  // prevenir versão do delphi em branco
-  if Trim(edtDelphiVersion.Text) = '' then
+  if (edtDelphiVersion.ItemIndex < 0) or (iVersion < 0) then
   begin
-    Stop := True;
     edtDelphiVersion.SetFocus;
-    Application.MessageBox(
-      'Versão do delphi não foi informada.',
-      'Erro.',
-      MB_OK + MB_ICONERROR
-    );
+    Application.MessageBox('Versão do Delphi não foi informada.',
+      'Erro.', MB_OK + MB_ICONERROR);
+    Exit;
   end;
 
-  // prevenir plataforma em branco
-  if Trim(edtPlatform.Text) = '' then
+  if edtPlatform.ItemIndex < 0 then
   begin
-    Stop := True;
     edtPlatform.SetFocus;
-    Application.MessageBox(
-      'Plataforma de compilação não foi informada.',
-      'Erro.',
-      MB_OK + MB_ICONERROR
-    );
+    Application.MessageBox('Plataforma de compilação não foi informada.',
+      'Erro.', MB_OK + MB_ICONERROR);
+    Exit;
   end;
 
-  // Gravar as configurações em um .ini para utilizar depois
   GravarConfiguracoes;
-
-  //if not DirectoryExists() then
-
+  Stop := False;
 end;
 
 procedure TFrmPrincipal.wizPgInstalacaoEnterPage(Sender: TObject;
@@ -1051,6 +1123,8 @@ begin
       ExtractFilePath(ParamStr(0)));
     edtPlatform.ItemIndex := edtPlatform.Items.IndexOf
       (ArqIni.ReadString('CONFIG', 'Plataforma', 'Win32'));
+    if edtPlatform.ItemIndex < 0 then
+      edtPlatform.ItemIndex := 0;
     edtDelphiVersion.ItemIndex := edtDelphiVersion.Items.IndexOf
       (ArqIni.ReadString('CONFIG', 'DelphiVersao', ''));
     ckbBCB.Checked := ArqIni.ReadBool('CONFIG', 'C++Builder', False);
@@ -1099,63 +1173,36 @@ begin
   StringReplace(edtDelphiVersion.Text, ' ', '_', [rfReplaceAll]) + '.txt';
 end;
 
-function TFrmPrincipal.RunAsAdminAndWaitForCompletion(hWnd: HWND;
-  filename: string): Boolean;
-{
-    See Step 3: Redesign for UAC Compatibility (UAC)
-    http://msdn.microsoft.com/en-us/library/bb756922.aspx
-}
+function TFrmPrincipal.LibraryDirectory(
+  APlatform: TJclBDSPlatform): String;
 var
-  sei: TShellExecuteInfo;
-  ExitCode: DWORD;
+  VersionSuffix: String;
 begin
-  ZeroMemory(@sei, SizeOf(sei));
-  sei.cbSize       := SizeOf(TShellExecuteInfo);
-  sei.Wnd          := hwnd;
-  sei.fMask        := SEE_MASK_FLAG_DDEWAIT or SEE_MASK_FLAG_NO_UI or SEE_MASK_NOCLOSEPROCESS;
-  sei.lpVerb       := PWideChar('runas');
-  sei.lpFile       := PWideChar(Filename);
-  sei.lpParameters := PWideChar('');
-  sei.nShow        := SW_HIDE;
-
-  if ShellExecuteEx(@sei) then
-  begin
-    repeat
-      Application.ProcessMessages;
-      GetExitCodeProcess(sei.hProcess, ExitCode) ;
-    until (ExitCode <> STILL_ACTIVE) or  Application.Terminated;
-  end;
+  VersionSuffix := AnsiUpperCase(
+    oUserControl.Installations[iVersion].VersionNumberStr);
+  Result := IncludeTrailingPathDelimiter(edtDirDestino.Text) +
+    'Lib\Delphi\Lib' + VersionSuffix;
+  if APlatform = bpWin64 then
+    Result := Result + 'x64';
 end;
 
 procedure TFrmPrincipal.SetPlatformSelected;
-var
-  sVersao: String;
-  sTipo: String;
 begin
-  iVersion := edtDelphiVersion.ItemIndex;
-  sVersao := AnsiUpperCase(oUserControl.Installations[iVersion].VersionNumberStr);
+  if edtDelphiVersion.ItemIndex < 0 then
+    raise Exception.Create('Nenhuma versão do Delphi foi selecionada.');
+  iVersion := NativeInt(
+    edtDelphiVersion.Items.Objects[edtDelphiVersion.ItemIndex]);
   sDirRoot := IncludeTrailingPathDelimiter(edtDirDestino.Text);
 
-  sTipo := 'Lib\Delphi\';
-
-  if edtPlatform.ItemIndex = 0 then // Win32
-  begin
-    tPlatform := bpWin32;
-    sDirLibrary := sDirRoot + sTipo + 'Lib' + sVersao;
-  end
+  if edtPlatform.ItemIndex = 0 then
+    tPlatform := bpWin32
   else
-  if edtPlatform.ItemIndex = 1 then // Win64
-  begin
     tPlatform := bpWin64;
-    sDirLibrary := sDirRoot + sTipo + 'Lib' + sVersao + 'x64';
-  end;
 
-  { Cria os diretorios }
-  if not (System.SysUtils.DirectoryExists(sDirRoot + sTipo)) then
-    MkDir(sDirRoot + sTipo);
-
-  if not (System.SysUtils.DirectoryExists(sDirLibrary)) then
-    MkDir(sDirLibrary);
+  sDirLibrary := LibraryDirectory(tPlatform);
+  if not System.SysUtils.ForceDirectories(sDirLibrary) then
+    raise Exception.CreateFmt('Não foi possível criar o diretório "%s".',
+      [sDirLibrary]);
 end;
 
 procedure TFrmPrincipal.URLClick(Sender: TObject);
@@ -1163,24 +1210,30 @@ begin
   ShellExecute(Handle, 'open', PWideChar(TLabel(Sender).Caption), '', '', 1);
 end;
 
-procedure TFrmPrincipal.WriteToTXT(const ArqTXT, AString: AnsiString;
+procedure TFrmPrincipal.WriteToTXT(const ArqTXT, AString: String;
   const AppendIfExists: Boolean; AddLineBreak: Boolean);
 var
   FS: TFileStream;
-  LineBreak: AnsiString;
+  Bytes: TBytes;
+  Text: String;
+  OpenMode: Word;
 begin
-  FS := TFileStream.Create(string(ArqTXT), IfThen(AppendIfExists and
-    System.SysUtils.FileExists(String(ArqTXT)),
-    Integer(fmOpenReadWrite), Integer(fmCreate)) or fmShareDenyWrite);
-  try
-    FS.Seek(0, soFromEnd); // vai para EOF
-    FS.Write(Pointer(AString)^, Length(AString));
+  Text := AString;
+  if AddLineBreak then
+    Text := Text + sLineBreak;
+  Bytes := TEncoding.UTF8.GetBytes(Text);
 
-    if AddLineBreak then
-    begin
-      LineBreak := sLineBreak;
-      FS.Write(Pointer(LineBreak)^, Length(LineBreak));
-    end;
+  if AppendIfExists and FileExists(ArqTXT) then
+    OpenMode := fmOpenReadWrite
+  else
+    OpenMode := fmCreate;
+
+  FS := TFileStream.Create(ArqTXT, OpenMode or fmShareDenyWrite);
+  try
+    if OpenMode = fmOpenReadWrite then
+      FS.Seek(0, soFromEnd);
+    if Length(Bytes) > 0 then
+      FS.WriteBuffer(Bytes[0], Length(Bytes));
   finally
     FS.Free;
   end;

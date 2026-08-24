@@ -82,10 +82,13 @@ interface
 
 uses
   Classes,
-  DB;
+  DB,
+  SysUtils;
 
 type
   TUCDataConnector = class(TComponent)
+  protected
+    procedure ValidateDataSet(DataSet: TDataSet; const OperationName: String);
   public
     procedure UCExecSQL(FSQL: String); virtual; abstract;
     function UCGetSQLDataset(FSQL: String): TDataset; dynamic; abstract;
@@ -105,17 +108,28 @@ implementation
 
 procedure TUCDataConnector.CloseDataSet(DataSet: TDataSet);
 begin
+  ValidateDataSet(DataSet, 'CloseDataSet');
   DataSet.Close;
 end;
 
 procedure TUCDataConnector.OpenDataSet(DataSet: TDataSet);
 begin
+  ValidateDataSet(DataSet, 'OpenDataSet');
   DataSet.Open;
 end;
 
 procedure TUCDataConnector.OrderBy(const DataSet: TDataSet; const FieldName: string);
 begin
+  ValidateDataSet(DataSet, 'OrderBy');
+  if Trim(FieldName) = '' then
+    raise Exception.Create('OrderBy: nome do campo nao informado');
+end;
 
+procedure TUCDataConnector.ValidateDataSet(DataSet: TDataSet;
+  const OperationName: String);
+begin
+  if not Assigned(DataSet) then
+    raise Exception.Create(OperationName + ': DataSet nao informado');
 end;
 
 end.

@@ -1,19 +1,19 @@
-Ôªø{ **************************************************************************** }
+{ **************************************************************************** }
 { Projeto: Componentes User Control ShowDelphi Edition                         }
-{ Biblioteca multiplataforma de componentes Delphi para o controle de usu√°rios }
+{ Biblioteca multiplataforma de componentes Delphi para o controle de usu·rios }
 {                                                                              }
 { Baseado nos pacotes Open Source User Control 2.31 RC1                        }
 {
-Autor da vers√£o Original: Rodrigo Alves Cordeiro
+Autor da vers„o Original: Rodrigo Alves Cordeiro
 
-Colaboradores da vers√£o original
+Colaboradores da vers„o original
 Alexandre Oliveira Campioni - alexandre.rural@netsite.com.br
 Bernard Grandmougin
 Carlos Guerra
 Daniel Wszelaki
 Everton Ramos [BS2 Internet]
-Francisco Due√±as - fduenas@flashmail.com
-Germ√°n H. Cravero
+Francisco DueÒas - fduenas@flashmail.com
+Germ·n H. Cravero
 Luciano Almeida Pimenta [ClubeDelphi.net]
 Luiz Benevenuto - luiz@siffra.com
 Luiz Fernando Severnini
@@ -26,30 +26,30 @@ Stefan Nawrath
 Vicente Barros Leonel [ Fknyght ]
 
 *******************************************************************************}
-{ Vers√£o ShowDelphi Edition                                                    }
+{ Vers„o ShowDelphi Edition                                                    }
 {                                                                              }
 { Direitos Autorais Reservados (c) 2015   Giovani Da Cruz                      }
 {                                                                              }
 { Colaboradores nesse arquivo:                                                 }
 {                                                                              }
-{ Voc√™ pode obter a √∫ltima vers√£o desse arquivo na pagina do projeto           }
+{ VocÍ pode obter a ˙ltima vers„o desse arquivo na pagina do projeto           }
 { User Control ShowDelphi Edition                                              }
 { Componentes localizado em http://infussolucoes.github.io/usercontrol-sd/     }
 {                                                                              }
-{ Esta biblioteca √© software livre; voc√™ pode redistribu√≠-la e/ou modific√°-la  }
-{ sob os termos da Licen√ßa P√∫blica Geral Menor do GNU conforme publicada pela  }
-{ Free Software Foundation; tanto a vers√£o 2.1 da Licen√ßa, ou (a seu crit√©rio) }
-{ qualquer vers√£o posterior.                                                   }
+{ Esta biblioteca È software livre; vocÍ pode redistribuÌ-la e/ou modific·-la  }
+{ sob os termos da LicenÁa P˙blica Geral Menor do GNU conforme publicada pela  }
+{ Free Software Foundation; tanto a vers„o 2.1 da LicenÁa, ou (a seu critÈrio) }
+{ qualquer vers„o posterior.                                                   }
 {                                                                              }
-{ Esta biblioteca √© distribu√≠da na expectativa de que seja √∫til, por√©m, SEM    }
-{ NENHUMA GARANTIA; nem mesmo a garantia impl√≠cita de COMERCIABILIDADE OU      }
-{ ADEQUA√á√ÉO A UMA FINALIDADE ESPEC√çFICA. Consulte a Licen√ßa P√∫blica Geral Menor}
-{ do GNU para mais detalhes. (Arquivo LICEN√áA.TXT ou LICENSE.TXT)              }
+{ Esta biblioteca È distribuÌda na expectativa de que seja ˙til, porÈm, SEM    }
+{ NENHUMA GARANTIA; nem mesmo a garantia implÌcita de COMERCIABILIDADE OU      }
+{ ADEQUA«√O A UMA FINALIDADE ESPECÕFICA. Consulte a LicenÁa P˙blica Geral Menor}
+{ do GNU para mais detalhes. (Arquivo LICEN«A.TXT ou LICENSE.TXT)              }
 {                                                                              }
-{ Voc√™ deve ter recebido uma c√≥pia da Licen√ßa P√∫blica Geral Menor do GNU junto }
-{ com esta biblioteca; se n√£o, escreva para a Free Software Foundation, Inc.,  }
-{ no endere√ßo 59 Temple Street, Suite 330, Boston, MA 02111-1307 USA.          }
-{ Voc√™ tamb√©m pode obter uma copia da licen√ßa em:                              }
+{ VocÍ deve ter recebido uma cÛpia da LicenÁa P˙blica Geral Menor do GNU junto }
+{ com esta biblioteca; se n„o, escreva para a Free Software Foundation, Inc.,  }
+{ no endereÁo 59 Temple Street, Suite 330, Boston, MA 02111-1307 USA.          }
+{ VocÍ tambÈm pode obter uma copia da licenÁa em:                              }
 { http://www.opensource.org/licenses/lgpl-license.php                          }
 {                                                                              }
 {                                                                              }
@@ -63,10 +63,10 @@ Vicente Barros Leonel [ Fknyght ]
   |* Historico
   |*
   |* 01/07/2015: Giovani Da Cruz
-  |*  - Cria√ß√£o e distribui√ß√£o da Primeira Versao ShowDelphi
+  |*  - CriaÁ„o e distribuiÁ„o da Primeira Versao ShowDelphi
   |*
   |* 14/07/2023: Giovani Da Cruz
-  |* - Reajustado para o SQL padr√£o
+  |* - Reajustado para o SQL padr„o
   ******************************************************************************* }
 
 unit UCBase;
@@ -142,6 +142,8 @@ type
   private
     FPerfilUsuario: TDataSet;
     FPerfilGrupo: TDataSet;
+    procedure SetPerfilGrupo(const Value: TDataSet);
+    procedure SetPerfilUsuario(const Value: TDataSet);
   public
     UserID: Integer;
     Profile: Integer;
@@ -159,9 +161,9 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   published
-    property PerfilUsuario: TDataSet read FPerfilUsuario write FPerfilUsuario;
+    property PerfilUsuario: TDataSet read FPerfilUsuario write SetPerfilUsuario;
     // Cadastro de Usuarios
-    property PerfilGrupo: TDataSet read FPerfilGrupo write FPerfilGrupo;
+    property PerfilGrupo: TDataSet read FPerfilGrupo write SetPerfilGrupo;
     // Cadastro de Perfil
   end;
 
@@ -483,14 +485,14 @@ type
     procedure ActionEsqueceuSenha(Sender: TObject);
   protected
     FRetry: Integer;
-    // Formul√°rios
+    // Formul·rios
     FFormTrocarSenha: TCustomForm;
     FFormLogin: TCustomForm;
     FFormGeral: TCustomForm;
     // -----
 
     procedure Loaded; override;
-    // Criar Formul√°rios
+    // Criar Formul·rios
     procedure CriaFormTrocarSenha; dynamic;
     // -----
 
@@ -876,11 +878,11 @@ begin
   begin
     If UpperCase(Owner.ClassParent.ClassName) = UpperCase('TDataModule') then
       raise Exception.Create
-        ('O Componente "TUserControl" n√£o pode ser definido em um "TDataModulo"');
+        ('O Componente "TUserControl" n„o pode ser definido em um "TDataModulo"');
 
     if not Assigned(DataConnector) then
     begin
-      { Tenta pegar um connector setado por c√≥digo }
+      { Tenta pegar um connector setado por cÛdigo }
       if Owner is TForm then
       begin
         if IsPublishedProp(Owner, 'DataConnector') then
@@ -916,7 +918,7 @@ begin
       if Owner.Components[Contador] is TUCSettings then
       begin
         Language := TUCSettings(Owner.Components[Contador]).Language;
-        // torna a linguage do UCSETTINGS como padr√£o
+        // torna a linguage do UCSETTINGS como padr„o
         FUserSettings.BancoDados := TUCSettings(Owner.Components[Contador]).BancoDados;
         ApplySettings(TUCSettings(Owner.Components[Contador]));
       end;
@@ -960,49 +962,49 @@ begin
     with TableUsers do
     begin
       if TableName = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable'));
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable'));
       if FieldUserID = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldUserID***');
       if FieldUserName = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldUserName***');
       if FieldLogin = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldLogin***');
       if FieldPassword = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldPassword***');
       if FieldEmail = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldEmail***');
       if FieldPrivileged = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldPrivileged***');
       if FieldTypeRec = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldTypeRec***');
       if FieldKey = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldKey***');
       if FieldProfile = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldProfile***');
 
       if FieldDateExpired = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldDateExpired***');
 
       if FieldUserExpired = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldUserExpired***');
 
       if FieldUserDaysSun = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldUserDaysSun***');
 
       if FieldUserInative = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptUsersTable') + #13 +
           #10 + 'FieldUserInative***');
 
     end;
@@ -1010,21 +1012,21 @@ begin
     with TableRights do
     begin
       if TableName = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable'));
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable'));
       if FieldUserID = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
           + #10 + 'FieldProfile***');
       if FieldModule = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
           + #10 + 'FieldModule***');
       if FieldComponentName = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
           + #10 + 'FieldComponentName***');
       if FieldFormName = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
           + #10 + 'FieldFormName***');
       if FieldKey = '' then
-        Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
+        raise Exception.Create(RetornaLingua(fLanguage, 'MsgExceptRightsTable') + #13
           + #10 + 'FieldKey***');
     end;
 
@@ -1036,7 +1038,7 @@ begin
     begin
       FThUCRun := TUCExecuteThread.Create(True);
       FThUCRun.AOwner := Self;
-      FThUCRun.FreeOnTerminate := True;
+      FThUCRun.FreeOnTerminate := False;
       FThUCRun.Resume;
     end;
   end;
@@ -1051,30 +1053,32 @@ procedure TUserControl.ActionEsqueceuSenha(Sender: TObject);
 var
   FDataset, FDataPer: TDataSet;
 begin
+  FDataset := nil;
+  FDataPer := nil;
   FDataset := DataConnector.UCGetSQLDataset('Select * from ' +
     TableUsers.TableName + ' Where ' + TableUsers.FieldLogin + ' = ' +
     QuotedStr(TfrmLoginWindow(FFormLogin).EditUsuario.Text));
-
-  FDataPer := DataConnector.UCGetSQLDataset('select ' + TableUsers.FieldUserName
-    + ' from ' + TableUsers.TableName + ' Where ' + TableUsers.FieldUserID +
-    ' = ' + FDataset.FieldByName(TableUsers.FieldProfile).AsString);
   try
     if not FDataset.IsEmpty then
+    begin
+      FDataPer := DataConnector.UCGetSQLDataset('select ' +
+        TableUsers.FieldUserName + ' from ' + TableUsers.TableName + ' Where ' +
+        TableUsers.FieldUserID + ' = ' +
+        FDataset.FieldByName(TableUsers.FieldProfile).AsString);
       MailUserControl.EnviaEsqueceuSenha
         (FDataset.FieldByName(TableUsers.FieldUserID).AsInteger,
         FDataset.FieldByName(TableUsers.FieldUserName).AsString,
         FDataset.FieldByName(TableUsers.FieldLogin).AsString,
         FDataset.FieldByName(TableUsers.FieldPassword).AsString,
         FDataset.FieldByName(TableUsers.FieldEmail).AsString,
-        FDataPer.FieldByName(TableUsers.FieldUserName).AsString)
-      // EncryptKey)
-
+        FDataPer.FieldByName(TableUsers.FieldUserName).AsString);
+    end
     else
       MessageDlg(UserSettings.CommonMessages.InvalidLogin, mtWarning,
         [mbOK], 0);
   finally
-    FDataset.Close;
-    FDataset.Free;
+    FreeAndNil(FDataPer);
+    FreeAndNil(FDataset);
   end;
 end;
 
@@ -1187,11 +1191,11 @@ procedure TUserControl.ActionTSBtGrava(Sender: TObject);
 var
   AuxPass: String;
 begin
-  { Pelo que eu analizei, a grava√ß√£o da senha no Banco de Dados e feita criptografada
-    Qdo a criptografia e padr√£o, a funcao RegistraCurrentUser descriptografa a senha atual
+  { Pelo que eu analizei, a gravaÁ„o da senha no Banco de Dados e feita criptografada
+    Qdo a criptografia e padr„o, a funcao RegistraCurrentUser descriptografa a senha atual
     agora quando criptografia e MD5SUM, devemos criptografar a senha atual vinda do formulario de
     troca de senha para podemos comparar com a senha atual da classe TUCCurrentUser
-    Modifica√ß√£o Feita por Vicente Barros Leonel
+    ModificaÁ„o Feita por Vicente Barros Leonel
   }
   case Self.Criptografia of
     cPadrao:
@@ -1386,7 +1390,7 @@ end;
 
 procedure TUserControl.Log(Msg: String; Level: Integer);
 begin
-  // Adicionado ao log a identifica√ß√£o da Aplica√ß√£o
+  // Adicionado ao log a identificaÁ„o da AplicaÁ„o
   if not LogControl.Active then
     Exit;
 
@@ -1478,7 +1482,7 @@ begin
     TTrocaSenha(FFormTrocarSenha).ForcarTroca := True;
     FFormTrocarSenha.ShowModal;
     FreeAndNil(FFormTrocarSenha);
-    { Incrementa a Data de Expira√ß√£o em x dias ap√≥s a troca de senha }
+    { Incrementa a Data de ExpiraÁ„o em x dias apÛs a troca de senha }
     CurrentUser.DateExpiration := CurrentUser.DateExpiration +
       CurrentUser.UserDaysExpired;
   end;
@@ -1509,6 +1513,8 @@ begin
   LockControlsUCControlMonitor;
   UsersLogged.DelCurrentUser;
   CurrentUser.UserID := 0;
+  CurrentUser.Password := '';
+  CurrentUser.PassLivre := '';
   if LoginMode = lmActive then
     ShowLogin;
   ApplyRights;
@@ -1599,8 +1605,6 @@ var
   Key: String;
   SQLstmt: String;
 begin
-  inherited;
-
   case Self.Login.CharCasePass of
     ecNormal:
       ;
@@ -1729,8 +1733,8 @@ procedure TUserControl.CheckBD;
 begin
   if Assigned(UserSettings) then
   begin
-    { Para garantir nomes em mai√∫sculo, pois com DBX h√° relatos de problemas
-    com nomes de tabela informados em min√∫sculo com o Firebird }
+    { Para garantir nomes em mai˙sculo, pois com DBX h· relatos de problemas
+    com nomes de tabela informados em min˙sculo com o Firebird }
     case UserSettings.BancoDados of
       Firebird: begin
                   FTableUsers.TableName := UpperCase(FTableUsers.TableName);
@@ -1764,7 +1768,7 @@ begin
   begin
 
     { Giovani Da Cruz
-    √â o conector que indica se a tabela existe, a fim de
+    … o conector que indica se a tabela existe, a fim de
     manter a compatibilidade enrte os bancos }
     if not DataConnector.UCFindTable(TableName) then
     begin
@@ -1785,6 +1789,13 @@ end;
 
 destructor TUserControl.Destroy;
 begin
+  if Assigned(FThUCRun) then
+  begin
+    FThUCRun.Terminate;
+    FThUCRun.WaitFor;
+    FreeAndNil(FThUCRun);
+  end;
+
   if not(csDesigning in ComponentState) then
     FUsersLogged.DelCurrentUser;
 
@@ -1862,7 +1873,7 @@ var
   Sql: String;
   DataSet: TDataSet;
 begin
-  { Procura o campo FieldUserDaysSun na tabela de usuarios se o mesmo n√£o existi cria }
+  { Procura o campo FieldUserDaysSun na tabela de usuarios se o mesmo n„o existi cria }
   try
     Sql := Format('select * from %s', [FTableUsers.TableName]);
     DataSet := DataConnector.UCGetSQLDataset(Sql);
@@ -2097,26 +2108,15 @@ end;
 procedure TUserControl.DeleteUCControlMonitor(UCControl: TUCControls);
 var
   Contador: Integer;
-  SLControls: TStringList;
 begin
   if not Assigned(FControlList) then
     Exit;
-  SLControls := TStringList.Create;
 
-  try
-    for Contador := 0 to Pred(FControlList.Count) do
-      if TUCControls(FControlList.Items[Contador]) = UCControl then
-        SLControls.Add(IntToStr(Contador));
-  except
-  end;
-
-  try
-    for Contador := 0 to Pred(SLControls.Count) do
-      FControlList.Delete(StrToInt(SLControls[Contador]));
-  except
-  end;
-
-  FreeAndNil(SLControls);
+  { A exclusao deve ocorrer de tras para frente para nao deslocar os indices
+    que ainda serao visitados. }
+  for Contador := Pred(FControlList.Count) downto 0 do
+    if TUCControls(FControlList.Items[Contador]) = UCControl then
+      FControlList.Delete(Contador);
 end;
 
 procedure TUserControl.LockControlsUCControlMonitor;
@@ -2380,7 +2380,7 @@ begin
         OnApplyRightsActionIt(Self,
           TAction(TActionList(ObjetoAction).Actions[Contador]));
     end;
-  end; // Fim das permiss√µes de Actions
+  end; // Fim das permissıes de Actions
 
   {$IFNDEF FPC}
   { .$IFDEF UCACTMANAGER }
@@ -2482,7 +2482,7 @@ begin
       ' AND ' + TableUsers.FieldPrivileged + ' = ' +
       BoolToStr(SoVerificarUsuarioAdmin);
 
-  { Ignorando usu√°rios inativos - Giovani Da Cruz }
+  { Ignorando usu·rios inativos - Giovani Da Cruz }
   if DesconsiderarInativo then
   begin
     SQLstmt := SQLstmt +
@@ -2615,7 +2615,7 @@ begin
       TipoCampo := UserSettings.Type_VarChar + '(32)';
   end;
 
-  { O SQL precisa ser o padr√£o }
+  { O SQL precisa ser o padr„o }
   with TableRights do
   begin
     if not ExtraRights then
@@ -2780,7 +2780,7 @@ var
 begin
   if Assigned(DataConnector) then
   begin
-    { QUEM VERIFICA SE A TABELA EXISTE √â O CONECTOR }
+    { QUEM VERIFICA SE A TABELA EXISTE … O CONECTOR }
     if not DataConnector.UCFindTable(FTableUsers.TableName) then
     begin
       SQLstmt := Format(
@@ -3180,7 +3180,7 @@ begin
     Type_VarChar   := SourceSettings.Type_VarChar;
     Type_Char      := SourceSettings.Type_Char;
     Type_Int       := SourceSettings.Type_Int;
-    end;  aten√ß√£o mudar aqui }
+    end;  atenÁ„o mudar aqui }
 
   UserSettings.WindowsPosition := SourceSettings.WindowsPosition;
 end;
@@ -3702,20 +3702,28 @@ begin
     Interval := 60000;
     Active := True;
   end;
-  Self.FVerifThread := TUCVerificaMensagemThread.Create(False);
-  Self.FVerifThread.AOwner := Self;
-  Self.FVerifThread.FreeOnTerminate := True;
+  if not (csDesigning in ComponentState) then
+  begin
+    Self.FVerifThread := TUCVerificaMensagemThread.Create(True);
+    Self.FVerifThread.AOwner := Self;
+    Self.FVerifThread.FreeOnTerminate := False;
+    Self.FVerifThread.Resume;
+  end;
 end;
 
 destructor TUCApplicationMessage.Destroy;
 begin
+  if Assigned(FVerifThread) then
+  begin
+    FVerifThread.Terminate;
+    FVerifThread.WaitFor;
+    FreeAndNil(FVerifThread);
+  end;
 
   if not(csDesigning in ComponentState) then
     if Assigned(UserControl) then
       UserControl.DeleteLoginMonitor(Self);
 
-//  Self.FVerifThread.Terminate;
-//  FreeAndNil(FVerifThread);
   inherited Destroy;
 end;
 
@@ -3776,12 +3784,6 @@ end;
 procedure TUCApplicationMessage.SetActive(const Value: Boolean);
 begin
   FActive := Value;
-  if (csDesigning in ComponentState) then
-    Exit;
-  if FActive then
-    FVerifThread.Resume
-  else
-    FVerifThread.Suspend;
 end;
 
 procedure TUCApplicationMessage.SetUserControl(const Value: TUserControl);
@@ -3840,6 +3842,7 @@ begin
     MsgsForm.Position := Self.FUserControl.UserSettings.WindowsPosition;
     MsgsForm.ShowModal;
   finally
+    FreeAndNil(MsgsForm);
   end;
 end;
 
@@ -3848,11 +3851,30 @@ end;
 { TVerifThread }
 
 procedure TUCVerificaMensagemThread.Execute;
+var
+  Elapsed: Integer;
+  WaitTime: Integer;
 begin
-  if (Assigned(TUCApplicationMessage(AOwner).UserControl)) and
-    (TUCApplicationMessage(AOwner).UserControl.CurrentUser.UserID <> 0) then
-    Synchronize(VerNovaMansagem);
-  Sleep(TUCApplicationMessage(AOwner).Interval);
+  while not Terminated do
+  begin
+    if (Assigned(AOwner)) and TUCApplicationMessage(AOwner).Active and
+      (Assigned(TUCApplicationMessage(AOwner).UserControl)) and
+      (TUCApplicationMessage(AOwner).UserControl.CurrentUser.UserID <> 0) then
+      Synchronize(VerNovaMansagem);
+
+    if Terminated then
+      Break;
+
+    WaitTime := TUCApplicationMessage(AOwner).Interval;
+    if WaitTime < 100 then
+      WaitTime := 100;
+    Elapsed := 0;
+    while (not Terminated) and (Elapsed < WaitTime) do
+    begin
+      Sleep(100);
+      Inc(Elapsed, 100);
+    end;
+  end;
 end;
 
 procedure TUCVerificaMensagemThread.VerNovaMansagem;
@@ -4367,11 +4389,25 @@ end;
 
 destructor TUCCurrentUser.Destroy;
 begin
-  if Assigned(FPerfilUsuario) then
-    SysUtils.FreeAndNil(FPerfilUsuario);
-  if Assigned(FPerfilGrupo) then
-    SysUtils.FreeAndNil(FPerfilGrupo);
+  PerfilUsuario := nil;
+  PerfilGrupo := nil;
   inherited;
+end;
+
+procedure TUCCurrentUser.SetPerfilGrupo(const Value: TDataSet);
+begin
+  if FPerfilGrupo = Value then
+    Exit;
+  SysUtils.FreeAndNil(FPerfilGrupo);
+  FPerfilGrupo := Value;
+end;
+
+procedure TUCCurrentUser.SetPerfilUsuario(const Value: TDataSet);
+begin
+  if FPerfilUsuario = Value then
+    Exit;
+  SysUtils.FreeAndNil(FPerfilUsuario);
+  FPerfilUsuario := Value;
 end;
 
 {$IFDEF DELPHI9_UP} {$ENDREGION} {$ENDIF}

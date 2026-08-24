@@ -1,5 +1,16 @@
 # User Control ShowDelphi Edition
 
+## Modernização do fork GDC
+
+As alterações em andamento estão registradas em
+[CHANGELOG_GDC.md](CHANGELOG_GDC.md). A nova API opt-in para hash forte e o
+procedimento seguro de adoção estão descritos em
+[MIGRACAO_SEGURANCA.md](MIGRACAO_SEGURANCA.md).
+
+O envio de e-mail não depende mais do Alcinoe. A configuração do transporte
+Indy e a injeção de uma implementação própria estão descritas em
+[MAIL_TRANSPORT.md](MAIL_TRANSPORT.md).
+
 Uma versão dos Componentes User Control mantido pela Comunidade Show Delphi.
 A comunidade tem o objetivo de manter esta biblioteca de componentes
 compatíveis com as novas versões do Delphi e Lazarus, realizando melhorias, sempre 

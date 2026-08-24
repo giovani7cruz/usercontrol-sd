@@ -83,17 +83,10 @@ uses
   StdCtrls,
   Dialogs,
   SysUtils,
-
 {$IFDEF DELPHIXE2_UP}
   System.UITypes,
-  ALSMTPClient,
-  ALInternetMessages,
-  ALStringList,
-{$ELSE}
-  {$IFNDEF FPC}
-  UCALSMTPClient,
-  {$ENDIF}
 {$ENDIF}
+  UCMailTransport,
   UcConsts_Language;
 
 type
@@ -140,16 +133,14 @@ type
     FAlteraUsuario: TUCMailMessage;
     FSenhaForcada: TUCMailMessage;
     FEsqueceuSenha: TUCMEsqueceuSenha;
-    {$IFNDEF FPC}
     fAuthType: TAlSmtpClientAuthType;
-    {$ENDIF}
+    FMailSender: IUCMailSender;
+    FTLSMode: TUCMailTLSMode;
+    FConnectTimeout: Integer;
+    FReadTimeout: Integer;
     function ParseMailMSG(Nome, Login, Senha, Email, Perfil,
-      txt: String): AnsiString;
-    {$IFNDEF FPC}
-    {$IFNDEF DELPHIXE2_UP}
-    procedure onStatus(Status: String);
-    {$ENDIF}
-    {$ENDIF}
+      txt: String): String;
+    procedure TransportStatus(const Status: String);
     function TrataSenha(Senha: String; Key: Word; GerarNova: Boolean;
       IDUser: Integer): String;
   protected
@@ -168,14 +159,19 @@ type
       Key: Word);
     procedure EnviaEsqueceuSenha(ID: Integer; Nome, Login, Senha, Email,
       Perfil: String); // Key: Word
+    property MailSender: IUCMailSender read FMailSender write FMailSender;
   published
-    {$IFNDEF FPC}
     property AuthType: TAlSmtpClientAuthType read fAuthType write fAuthType;
-    {$ENDIF}
+    property TLSMode: TUCMailTLSMode read FTLSMode write FTLSMode
+      default ucTLSNone;
+    property ConnectTimeout: Integer read FConnectTimeout write FConnectTimeout
+      default 30000;
+    property ReadTimeout: Integer read FReadTimeout write FReadTimeout
+      default 30000;
     property ServidorSMTP: String read FSMTPServer write FSMTPServer;
     property Usuario: String read FUsuario write FUsuario;
     property Senha: String read FSenha write FSenha;
-    property Porta: Integer read FPorta write FPorta default 0;
+    property Porta: Integer read FPorta write FPorta default 25;
     property NomeRemetente: String read FNomeRemetente write FNomeRemetente;
     property EmailRemetente: String read FEmailRemetente write FEmailRemetente;
     property AdicionaUsuario: TUCMailMessage read FAdicionaUsuario
@@ -194,7 +190,11 @@ implementation
 
 uses
   ucBase,
-  UCEMailForm_U, UCDataInfo;
+  UCEMailForm_U, UCDataInfo
+{$IFNDEF FPC}
+  , UCMailIndy
+{$ENDIF}
+  ;
 
 function GeraSenha(Digitos: Integer; Min: Boolean; Mai: Boolean;
   Num: Boolean): string;
@@ -202,9 +202,14 @@ const
   MinC = 'abcdef';
   MaiC = 'ABCDEF';
   NumC = '1234567890';
+type
+  TGUIDBytes = array [0 .. 15] of Byte;
 var
   p, q: Integer;
   Char, Senha: String;
+  Guid: TGUID;
+  GuidBytes: TGUIDBytes;
+  Limit: Integer;
 begin
   Char := '';
   If Min then
@@ -213,10 +218,23 @@ begin
     Char := Char + MaiC;
   If Num then
     Char := Char + NumC;
+  if (Digitos <= 0) or (Char = '') then
+  begin
+    Result := '';
+    Exit;
+  end;
+
+  Senha := '';
+  Limit := (256 div Length(Char)) * Length(Char);
   for p := 1 to Digitos do
   begin
-    Randomize;
-    q := Random(Length(Char)) + 1;
+    repeat
+      if CreateGUID(Guid) <> 0 then
+        raise Exception.Create('Nao foi possivel gerar uma senha segura');
+      Move(Guid, GuidBytes, SizeOf(GuidBytes));
+      q := GuidBytes[0];
+    until q < Limit;
+    q := (q mod Length(Char)) + 1;
     Senha := Senha + Char[q];
   end;
   Result := Senha;
@@ -257,6 +275,15 @@ end;
 constructor TMailUserControl.Create(AOwner: TComponent);
 begin
   inherited;
+  FPorta := 25;
+  fAuthType := alsmtpClientAuthPlain;
+  FTLSMode := ucTLSNone;
+  FConnectTimeout := 30000;
+  FReadTimeout := 30000;
+{$IFNDEF FPC}
+  FMailSender := TUCIndyMailSender.Create;
+{$ENDIF}
+
   AdicionaUsuario := TUCMailMessage.Create(Self);
   AdicionaUsuario.FLines.Add
     ('<html> <head> <title>Inclusão de Senha</title> <style type="text/css"> <!-- body { 	margin-left: 0px; '
@@ -375,13 +402,8 @@ begin
     '<p>Administrador do sistema</p></body></html>');
   SenhaTrocada.FTitulo := 'Alteração de senha';
 
-  {$IFNDEF FPC}
-  fAuthType := alsmtpClientAuthPlain;
-  {$ENDIF}
-
   if csDesigning in ComponentState then
   begin
-    Porta := 25;
     AdicionaUsuario.Ativo := True;
     AlteraUsuario.Ativo := True;
     EsqueceuSenha.Ativo := True;
@@ -397,6 +419,7 @@ end;
 
 destructor TMailUserControl.Destroy;
 begin
+  FMailSender := nil;
   SysUtils.FreeAndNil(FAdicionaUsuario);
   SysUtils.FreeAndNil(FAlteraUsuario);
   SysUtils.FreeAndNil(FEsqueceuSenha);
@@ -433,96 +456,76 @@ begin
 end;
 
 function TMailUserControl.ParseMailMSG(Nome, Login, Senha, Email, Perfil,
-  txt: String): AnsiString;
+  txt: String): String;
 begin
   txt := StringReplace(txt, ':nome', Nome, [rfReplaceAll]);
   txt := StringReplace(txt, ':login', Login, [rfReplaceAll]);
   txt := StringReplace(txt, ':senha', Senha, [rfReplaceAll]);
   txt := StringReplace(txt, ':email', Email, [rfReplaceAll]);
   txt := StringReplace(txt, ':perfil', Perfil, [rfReplaceAll]);
-  Result := AnsiString(txt);
+  Result := txt;
 end;
 
-{$IFNDEF FPC}
-{$IFNDEF DELPHIXE2_UP}
-procedure TMailUserControl.onStatus(Status: String);
+procedure TMailUserControl.TransportStatus(const Status: String);
 begin
   if not Assigned(UCEMailForm) then
     Exit;
   UCEMailForm.lbStatus.Caption := Status;
   UCEMailForm.Update;
 end;
-{$ENDIF}
-{$ENDIF}
 
 Function TMailUserControl.EnviaEmailTp(Nome, Login, USenha, Email,
   Perfil: String; UCMSG: TUCMailMessage): Boolean;
-{$IFNDEF FPC}
 var
-  MailMsg: TAlSmtpClient;
-
-{$IFDEF DELPHIXE2_UP}
-  // - Ajuste de Emers0n em 01/12/2016
-  MailRecipients: TALStringList;
-
-  MailHeader: TALEmailHeader;
-{$ELSE}
-  MailRecipients: TStringList;
-  MailHeader: TALSMTPClientHeader;
-{$ENDIF}
+  Request: TUCMailRequest;
 begin
   Result := False;
   if Trim(Email) = '' then
     Exit;
-  MailMsg := TAlSmtpClient.Create;
 
-  {$IFDEF DELPHIXE2_UP}
-  // MailMsg.OnStatus := OnStatus;
+  if not Assigned(FMailSender) then
+    raise Exception.Create('Transporte de e-mail nao configurado');
 
-
-  MailRecipients := TALStringList.Create;
-  MailHeader := TALEmailHeader.Create;
-{$ELSE}
-  MailMsg := TAlSmtpClient.Create;
-  MailMsg.onStatus := onStatus;
-  MailRecipients := TStringList.Create;
-{$ENDIF}
-  MailHeader.From := AnsiString(EmailRemetente);
-  MailHeader.SendTo := AnsiString(Email);
-  MailHeader.ContentType := 'text/html';
-  MailRecipients.Append(AnsiString(Email));
-  MailHeader.Subject := AnsiString(UCMSG.Titulo);
-
+  Request := TUCMailRequest.Create;
   try
+    Request.Host := ServidorSMTP;
+    Request.Port := FPorta;
+    Request.UserName := Usuario;
+    Request.Password := Senha;
+    Request.AuthType := fAuthType;
+    Request.TLSMode := FTLSMode;
+    Request.ConnectTimeout := FConnectTimeout;
+    Request.ReadTimeout := FReadTimeout;
+    Request.FromAddress := EmailRemetente;
+    Request.FromName := NomeRemetente;
+    Request.ToAddress := Email;
+    Request.Subject := UCMSG.Titulo;
+    Request.Body := ParseMailMSG(Nome, Login, USenha, Email, Perfil,
+      UCMSG.Mensagem.Text);
+
     try
       UCEMailForm := TUCEMailForm.Create(Self);
       UCEMailForm.lbStatus.Caption := '';
       UCEMailForm.Show;
       UCEMailForm.Update;
 
-      MailMsg.SendMail(AnsiString(ServidorSMTP), FPorta, AnsiString(EmailRemetente), MailRecipients,
-        AnsiString(Usuario), AnsiString(Senha), fAuthType, MailHeader.RawHeaderText,
-        ParseMailMSG(Nome, Login, USenha, Email, Perfil, UCMSG.Mensagem.Text));
+      FMailSender.Send(Request, TransportStatus);
 
       UCEMailForm.Update;
       Result := True;
     except
       on e: Exception do
       begin
-        UCEMailForm.Close;
+        if Assigned(UCEMailForm) then
+          UCEMailForm.Close;
         MessageDlg(e.Message, mtWarning, [mbok], 0);
         raise;
       end;
     end;
   finally
-    FreeAndNil(MailMsg);
-    FreeAndNil(MailHeader);
-    FreeAndNil(MailRecipients);
+    Request.Free;
     FreeAndNil(UCEMailForm);
   end;
-{$ELSE}
-begin
-{$ENDIF}
 end;
 
 procedure TMailUserControl.EnviaEsqueceuSenha(ID: Integer;
@@ -531,22 +534,18 @@ Var
   NovaSenha: String;
 begin
   if Length(Trim(Email)) <> 0 then
-  Begin
-    try
-      NovaSenha := TrataSenha(Senha, 0, True, ID);
-      If EnviaEmailTp(Nome, Login, NovaSenha, Email, Perfil, EsqueceuSenha) = True
-      then
-      Begin
-        TUserControl(fUsercontrol).ChangePassword(ID, NovaSenha);
-        MessageDlg(EsqueceuSenha.MensagemEmailEnviado, mtInformation,
-          [mbok], 0);
-      End
-      else
-        MessageDlg('Não foi possivel enviar nova senha', mtInformation,
-          [mbok], 0);
-    except
-    end;
-  End;
+  begin
+    NovaSenha := TrataSenha(Senha, 0, True, ID);
+    if EnviaEmailTp(Nome, Login, NovaSenha, Email, Perfil, EsqueceuSenha) then
+    begin
+      TUserControl(fUsercontrol).ChangePassword(ID, NovaSenha);
+      MessageDlg(EsqueceuSenha.MensagemEmailEnviado, mtInformation,
+        [mbok], 0);
+    end
+    else
+      MessageDlg('Não foi possivel enviar nova senha', mtInformation,
+        [mbok], 0);
+  end;
 end;
 {$WARNINGS OFF}
 

@@ -142,9 +142,11 @@ type
     FAsc: Boolean;
     FListaTPointMsg: array of TPointMsg;
     procedure MontaTela;
+    procedure ReleaseResources;
   public
     DSMsgs: TDataset;
     DSUsuarios: TDataset;
+    destructor Destroy; override;
   end;
 
 var
@@ -433,17 +435,26 @@ begin
 end;
 
 procedure TMsgsForm.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  ReleaseResources;
+end;
+
+destructor TMsgsForm.Destroy;
+begin
+  ReleaseResources;
+  inherited;
+end;
+
+procedure TMsgsForm.ReleaseResources;
 var
   I: Integer;
 begin
   for I := 0 to High(FListaTPointMsg) do
     Dispose(FListaTPointMsg[I]);
+  SetLength(FListaTPointMsg, 0);
 
-  if Assigned(DSMsgs) then
-    SysUtils.FreeAndNil(DSMsgs);
-
-  if Assigned(DSUsuarios) then
-    SysUtils.FreeAndNil(DSUsuarios);
+  SysUtils.FreeAndNil(DSMsgs);
+  SysUtils.FreeAndNil(DSUsuarios);
 end;
 
 procedure TMsgsForm.FormCreate(Sender: TObject);

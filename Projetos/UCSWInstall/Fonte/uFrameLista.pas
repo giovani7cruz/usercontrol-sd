@@ -232,7 +232,6 @@ begin
    pckUserControl_DT_dpk.Checked := True;
 
    { Obrigatório somente para versão XE 2 ou superior }
-   //pckAlcinoe_dpk.Checked := True;
 
   // if not FUtilizarBotoesMarcar then
   // begin

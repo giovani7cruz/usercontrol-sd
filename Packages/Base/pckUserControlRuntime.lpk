@@ -30,7 +30,7 @@
       </Other>
     </CompilerOptions>
     <Version Major="2" Minor="33"/>
-    <Files Count="24">
+    <Files Count="25">
       <Item1>
         <Filename Value="..\..\source\Base\TrocaSenha_U.pas"/>
         <UnitName Value="TrocaSenha_U"/>
@@ -127,6 +127,10 @@
         <Filename Value="..\..\Source\Base\UCObjSel_U.pas"/>
         <UnitName Value="UCObjSel_U"/>
       </Item24>
+      <Item25>
+        <Filename Value="..\..\Source\Base\UCMailTransport.pas"/>
+        <UnitName Value="UCMailTransport"/>
+      </Item25>
     </Files>
     <RequiredPkgs Count="3">
       <Item1>

@@ -1,4 +1,4 @@
-﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{F61BFD66-E9CC-47AD-BBE6-51E4ACDBEEAC}</ProjectGuid>
         <ProjectVersion>19.2</ProjectVersion>
@@ -64,11 +64,10 @@
         <VerInfo_MinorVer>3</VerInfo_MinorVer>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>
         <VerInfo_Locale>1046</VerInfo_Locale>
-        <DCC_UsePackage>ACBr_Convenio115;PkgSDComboBox;JvGlobus;JvMM;FireDACTDataDriver;ACBr_BoletoFR;JvManagedThreads;FireDACSqliteDriver;FortesReportCE_Win32_DXE8_vcl;FireDACDSDriver;frxTee22;DBXSqliteDriver;ACBr_BoletoRL;FireDACPgDriver;fmx;ACBr_Diversos;IndySystem;JvCrypt;TeeDB;tethering;ACBr_NFeDanfeFR;JvDlgs;acntDelphiXE8_R;vclib;DBXInterBaseDriver;DataSnapClient;DataSnapServer;DataSnapCommon;ACBr_NFeDanfeESCPOS;ACBr_synapse;JvNet;DataSnapProviderClient;JvDotNetCtrls;DBXSybaseASEDriver;frxe22;DbxCommonDriver;ACBr_MDFeDamdfeFR;vclimg;DUnitXRuntime;fs22;dbxcds;ACBr_Comum;DatasnapConnectorsFreePascal;acntDelphiXE8;appanalytics;PkgSDShowException;JvXPCtrls;vcldb;vcldsnap;ACBr_SATExtratoESCPOS;fmxFireDAC;DBXDb2Driver;DBXOracleDriver;CustomIPTransport;JvCore;ACBr_Serial;vclribbon;ACBr_SPED;dsnap;IndyIPServer;ACBr_MDFe;fmxase;vcl;IndyCore;ACBr_DFeComum;DBXMSSQLDriver;IndyIPCommon;CloudService;FmxTeeUI;FireDACIBDriver;CodeSiteExpressPkg;ACBr_Boleto;DataSnapFireDAC;FireDACDBXDriver;ACBr_Sintegra;ACBr_SAT;soapserver;JvAppFrm;JvDB;JvRuntimeDesign;inetdbxpress;ACBr_CTeDacteFR;dsnapxml;FireDACInfxDriver;FireDACDb2Driver;ACBr_LFD;JclDeveloperTools;ACBr_PCNComum;PkgDBCheckGrid;JvDocking;adortl;JvWizards;ACBr_TCP;FireDACASADriver;ACBr_SEF2;JvHMI;frx22;bindcompfmx;ACBr_PAF;JvBands;FireDACODBCDriver;RESTBackendComponents;emsclientfiredac;rtl;dbrtl;DbxClientDriver;FireDACCommon;bindcomp;inetdb;JvPluginSystem;ACBr_NFe;Tee;JclContainers;DBXOdbcDriver;ACBr_CTe;ibmonitor;vclFireDAC;JvCmp;JvSystem;xmlrtl;DataSnapNativeClient;svnui;ibxpress;ACBr_NFCeECFVirtual;JvControls;JvTimeFramework;IndyProtocols;DBXMySQLDriver;ACBr_NFeDanfeRL;FireDACCommonDriver;bindcompdbx;soaprtl;bindengine;vclactnband;FMXTee;TeeUI;bindcompvcl;JvStdCtrls;JvCustom;Jcl;vclie;JvJans;JvPageComps;ACBr_OpenSSL;frxDB22;FireDACADSDriver;vcltouch;ACBr_TEFD;JvPrintPreview;emsclient;VclSmp;FireDAC;DBXInformixDriver;FireDACMSSQLDriver;Intraweb;VCLRESTComponents;PkgSDProgressBar;DataSnapConnectors;ACBr_SATExtratoRL;DataSnapServerMidas;DSRemoteDBxSearch;ACBr_SATECFVirtual;dsnapcon;DBXFirebirdDriver;ACBr_TXTComum;inet;fmxobj;JclVcl;JvPascalInterpreter;FireDACMySQLDriver;soapmidas;vclx;ACBr_SPEDImportar;svn;DBXSybaseASADriver;FireDACOracleDriver;fmxdae;RESTComponents;FireDACMSAccDriver;dbexpress;DataSnapIndy10ServerTransport;IndyIPClient;$(DCC_UsePackage)</DCC_UsePackage>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <DCC_ExeOutput>..\..\..\</DCC_ExeOutput>
         <VerInfo_Keys>CompanyName=Comunidade ShowDelphi;FileVersion=1.3.2.0;InternalName=;LegalCopyright=Comunidade ShowDelphi;LegalTrademarks=Comunidade ShowDelphi;OriginalFilename=;ProductVersion=1.3;Comments=Criado por Giovani Da Cruz;ProgramID=br.inf.infus.$(MSBuildProjectName);FileDescription=$(MSBuildProjectName);ProductName=$(MSBuildProjectName)</VerInfo_Keys>
-        <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+        <Manifest_File>UCSWInstall.manifest</Manifest_File>
         <DCC_Namespace>Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <VerInfo_Release>2</VerInfo_Release>
     </PropertyGroup>
@@ -81,7 +80,6 @@
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <DCC_UsePackage>PkgSDComboBox;FireDACTDataDriver;FireDACSqliteDriver;FireDACDSDriver;DBXSqliteDriver;FireDACPgDriver;fmx;IndySystem;TeeDB;tethering;vclib;DBXInterBaseDriver;DataSnapClient;DataSnapServer;DataSnapCommon;DataSnapProviderClient;DBXSybaseASEDriver;DbxCommonDriver;vclimg;dbxcds;DatasnapConnectorsFreePascal;appanalytics;PkgSDShowException;vcldb;vcldsnap;fmxFireDAC;DBXDb2Driver;DBXOracleDriver;CustomIPTransport;vclribbon;dsnap;IndyIPServer;fmxase;vcl;IndyCore;DBXMSSQLDriver;IndyIPCommon;CloudService;FmxTeeUI;FireDACIBDriver;DataSnapFireDAC;FireDACDBXDriver;soapserver;inetdbxpress;dsnapxml;FireDACInfxDriver;FireDACDb2Driver;PkgDBCheckGrid;adortl;FireDACASADriver;bindcompfmx;FireDACODBCDriver;RESTBackendComponents;emsclientfiredac;rtl;dbrtl;DbxClientDriver;FireDACCommon;bindcomp;inetdb;Tee;DBXOdbcDriver;ibmonitor;vclFireDAC;xmlrtl;DataSnapNativeClient;ibxpress;IndyProtocols;DBXMySQLDriver;FireDACCommonDriver;bindcompdbx;soaprtl;bindengine;vclactnband;FMXTee;TeeUI;bindcompvcl;vclie;FireDACADSDriver;vcltouch;emsclient;VclSmp;FireDAC;DBXInformixDriver;FireDACMSSQLDriver;Intraweb;VCLRESTComponents;PkgSDProgressBar;DataSnapConnectors;DataSnapServerMidas;DSRemoteDBxSearch;dsnapcon;DBXFirebirdDriver;inet;fmxobj;FireDACMySQLDriver;soapmidas;vclx;DBXSybaseASADriver;FireDACOracleDriver;fmxdae;RESTComponents;FireDACMSAccDriver;dbexpress;DataSnapIndy10ServerTransport;IndyIPClient;$(DCC_UsePackage)</DCC_UsePackage>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1)'!=''">
         <DCC_Define>DEBUG;$(DCC_Define)</DCC_Define>
@@ -102,12 +100,14 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
+        <DCC_Optimize>true</DCC_Optimize>
+        <DCC_GenerateStackFrames>false</DCC_GenerateStackFrames>
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
         <DCC_DebugInformation>0</DCC_DebugInformation>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
-        <BT_BuildType>Debug</BT_BuildType>
+        <BT_BuildType>Release</BT_BuildType>
         <Icon_MainIcon>UCSWInstall_Icon.ico</Icon_MainIcon>
         <VerInfo_MinorVer>3</VerInfo_MinorVer>
         <AppEnableRuntimeThemes>true</AppEnableRuntimeThemes>

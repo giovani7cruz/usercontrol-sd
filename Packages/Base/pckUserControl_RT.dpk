@@ -45,6 +45,9 @@ requires
   {$ENDIF}
 
 contains
+  {$IFDEF DELPHI2009_UP}
+  UCPasswordHash in '..\..\source\Base\UCPasswordHash.pas',
+  {$ENDIF}
   TrocaSenha_U in '..\..\source\Base\TrocaSenha_U.pas',
   UCBase in '..\..\source\Base\UCBase.pas',
   SenhaForm_U in '..\..\source\Base\SenhaForm_U.pas',
@@ -62,10 +65,11 @@ contains
   pUCFrame_Profile in '..\..\source\Base\pUCFrame_Profile.pas',
   pUCFrame_Log in '..\..\source\Base\pUCFrame_Log.pas' {UCFrame_Log},
   pUcFrame_UserLogged in '..\..\source\Base\pUcFrame_UserLogged.pas' {UCFrame_UsersLogged},
+  UCMailTransport in '..\..\source\Base\UCMailTransport.pas',
+  UCMailIndy in '..\..\source\Base\UCMailIndy.pas',
   UCMail in '..\..\source\Base\UCMail.pas',
   UCEMailForm_U in '..\..\source\Base\UCEMailForm_U.pas',
   IncUser_U in '..\..\source\Base\IncUser_U.pas',
-  UCALSMTPClient in '..\..\source\Base\UCALSMTPClient.pas',
   IncPerfil_U in '..\..\source\Base\IncPerfil_U.pas';
 
 end.

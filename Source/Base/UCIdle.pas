@@ -101,6 +101,7 @@ type
     FUserControl: TUserControl; // changed from FUCComp to FUserControl
     {$IFNDEF FPC}
     FOnAppMessage: TMessageEvent;
+    FMessageHooked: Boolean;
     {$ENDIF}
     FTimeLeftNotify: TUCIdleTimeLeft;
     procedure UCAppMessage(var Msg: TMsg; var Handled: Boolean);
@@ -133,7 +134,20 @@ end;
 
 destructor TUCIdle.Destroy;
 begin
-  FreeAndNil(FThIdle);
+  {$IFNDEF FPC}
+  if FMessageHooked then
+  begin
+    Application.OnMessage := FOnAppMessage;
+    FMessageHooked := False;
+  end;
+  {$ENDIF}
+
+  if Assigned(FThIdle) then
+  begin
+    FThIdle.Terminate;
+    FThIdle.WaitFor;
+    FreeAndNil(FThIdle);
+  end;
   inherited;
 end;
 
@@ -149,12 +163,13 @@ procedure TUCIdle.Loaded;
 begin
   inherited;
   if not(csDesigning in ComponentState) then
-    if (Assigned(UserControl)) or (Assigned(OnIdle)) then
+    if ((Assigned(UserControl)) or (Assigned(OnIdle))) and (FTimeOut > 0) then
     begin
       {$IFNDEF FPC}
       if Assigned(Application.OnMessage) then
         FOnAppMessage := Application.OnMessage;
       Application.OnMessage := UCAppMessage;
+      FMessageHooked := True;
       FThIdle := TThUCIdle.Create(True);
       FThIdle.CurrentMilisec := 0;
       FThIdle.UCIdle := Self;
@@ -181,7 +196,8 @@ end;
 
 procedure TUCIdle.UCAppMessage(var Msg: TMsg; var Handled: Boolean);
 begin
-  if (Msg.message = wm_mousemove) or (Msg.message = wm_keydown) then
+  if Assigned(FThIdle) and
+    ((Msg.message = wm_mousemove) or (Msg.message = wm_keydown)) then
     FThIdle.CurrentMilisec := 0;
 
   {$IFNDEF FPC}
@@ -208,6 +224,17 @@ begin
   while not Terminated do
   begin
     Sleep(1000);
+
+    if Terminated then
+      Break;
+
+    if UCIdle.Timeout <= 0 then
+    begin
+      CurrentMilisec := 0;
+      Continue;
+    end;
+
+    Inc(CurrentMilisec, 1000);
     if UCIdle.Timeout <= CurrentMilisec then
     begin
       CurrentMilisec := 0;
@@ -217,7 +244,6 @@ begin
     end
     else
     begin
-      Inc(CurrentMilisec, 1000);
       {$IFNDEF FPC}
       Synchronize(TimeLeftSinc);
       {$ENDIF}
