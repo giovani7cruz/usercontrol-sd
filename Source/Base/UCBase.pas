@@ -1039,7 +1039,7 @@ begin
       FThUCRun := TUCExecuteThread.Create(True);
       FThUCRun.AOwner := Self;
       FThUCRun.FreeOnTerminate := False;
-      FThUCRun.Resume;
+      FThUCRun.Start;
     end;
   end;
 end;
@@ -3707,7 +3707,7 @@ begin
     Self.FVerifThread := TUCVerificaMensagemThread.Create(True);
     Self.FVerifThread.AOwner := Self;
     Self.FVerifThread.FreeOnTerminate := False;
-    Self.FVerifThread.Resume;
+    Self.FVerifThread.Start;
   end;
 end;
 

@@ -264,8 +264,7 @@ begin
       FUsercontrol.TableUsers.FieldUserID + ' = ' + IntToStr(TempID));
 
     { Giovani da Cruz (G7) // Alteração para adequação de alguns connectores }
-    FUsercontrol.DataConnector.CloseDataSet(FDataSetCadastroUsuario);
-    FUsercontrol.DataConnector.OpenDataSet(FDataSetCadastroUsuario);
+    FUsercontrol.DataConnector.RefreshDataSet(FDataSetCadastroUsuario);
   end;
 end;
 
@@ -457,8 +456,7 @@ begin
     UserPermis.Show;
 
     { Giovani da Cruz (G7) // Alteração para adequação de alguns connectores }
-    FUsercontrol.DataConnector.CloseDataSet(FDataSetCadastroUsuario);
-    FUsercontrol.DataConnector.OpenDataSet(FDataSetCadastroUsuario);
+    FUsercontrol.DataConnector.RefreshDataSet(FDataSetCadastroUsuario);
 
     FDataSetCadastroUsuario.Locate('idUser', UserPermis.FTempIdUser, []);
   end;

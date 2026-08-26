@@ -853,7 +853,7 @@ begin
   end;
 
   // Exibe Permissoes do Perfil
-  if DSPerfil.Active then
+  if Assigned(DSPerfil) and DSPerfil.Active then
   begin
     for Contador := 0 to TreeAction.Items.Count - 1 do
     begin
@@ -884,7 +884,11 @@ begin
       end;
     end;
 
-    // Extra Rights
+  end;
+
+  // Extra Rights do perfil
+  if Assigned(DSPerfilEX) and DSPerfilEX.Active then
+  begin
     for Contador := 0 to Pred(TreeControls.Items.Count) do
     begin
       DSPerfilEX.First;

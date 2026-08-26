@@ -195,13 +195,10 @@ begin
 
     UserPermis.DSPermissEX.Open;
 
-    UserPermis.DSPerfil := TDataset.Create(UserPermis);
-
     UserPermis.Show;
 
     { Giovani da Cruz (G7) // Alteração para adequação de alguns connectores }
-    FUserControl.DataConnector.CloseDataSet(FDataSetPerfilUsuario);
-    FUserControl.DataConnector.OpenDataSet(FDataSetPerfilUsuario);
+    FUserControl.DataConnector.RefreshDataSet(FDataSetPerfilUsuario);
 
     FDataSetPerfilUsuario.Locate('idUser', UserPermis.FTempIdUser, []);
   end;
@@ -350,8 +347,7 @@ begin
   end;
 
   { Giovani da Cruz (G7) // Alteração para adequação de alguns connectores }
-  FUsercontrol.DataConnector.CloseDataSet(FDataSetPerfilUsuario);
-  FUsercontrol.DataConnector.OpenDataSet(FDataSetPerfilUsuario);
+  FUsercontrol.DataConnector.RefreshDataSet(FDataSetPerfilUsuario);
 end;
 
 destructor TFrame_Profile.Destroy;

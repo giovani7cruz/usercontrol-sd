@@ -24,6 +24,13 @@ type
     function TransactionObjectName: string;
   end;
 
+  { Optional extension for connections that materialize data outside the
+    TDataSet.Open lifecycle (REST, RPC, cached datasets, and similar). }
+  IUCDataConnectionRefresh = interface
+    ['{27A1C772-E538-4A91-9FE7-C4288F5FD242}']
+    procedure RefreshDataSet(DataSet: TDataSet);
+  end;
+
   { Runtime adapter. It deliberately has no Register procedure, so installing a
     new design-time component is not necessary. }
   TUCConnectionAdapter = class(TUCDataConnector)
@@ -38,6 +45,7 @@ type
     function UCFindDataConnection: Boolean; override;
     function GetDBObjectName: String; override;
     function GetTransObjectName: String; override;
+    procedure RefreshDataSet(DataSet: TDataSet); override;
 
     property Connection: IUCDataConnection read FConnection write FConnection;
   end;
@@ -51,6 +59,17 @@ begin
   Result := FConnection;
   if not Assigned(Result) then
     raise EUCConnectionAdapter.Create('Conexao do UserControl nao informada');
+end;
+
+procedure TUCConnectionAdapter.RefreshDataSet(DataSet: TDataSet);
+var
+  Refresher: IUCDataConnectionRefresh;
+begin
+  ValidateDataSet(DataSet, 'RefreshDataSet');
+  if Supports(RequireConnection, IUCDataConnectionRefresh, Refresher) then
+    Refresher.RefreshDataSet(DataSet)
+  else
+    inherited RefreshDataSet(DataSet);
 end;
 
 procedure TUCConnectionAdapter.UCExecSQL(FSQL: String);

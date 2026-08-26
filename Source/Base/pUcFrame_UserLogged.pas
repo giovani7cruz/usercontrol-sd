@@ -180,8 +180,7 @@ begin
   try
     Screen.Cursor := crHourGlass;
 
-    FUserControl.DataConnector.CloseDataSet(dsDados.Dataset);
-    FUserControl.DataConnector.OpenDataSet(dsDados.Dataset);
+    FUserControl.DataConnector.RefreshDataSet(dsDados.Dataset);
   finally
     Screen.Cursor := crDefault;
   end;

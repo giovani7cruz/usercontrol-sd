@@ -19,6 +19,31 @@ FUCConnector.Connection := TMinhaConexaoUC.Create(MinhaConexao);
 UserControl.DataConnector := FUCConnector;
 ```
 
+## Atualizacao de datasets materializados
+
+Por padrao, `RefreshDataSet` fecha e abre o dataset. Conexoes que carregam
+dados por REST, RPC ou outra camada de servico devem implementar tambem a
+interface opcional `IUCDataConnectionRefresh`. Nesse caso, o adapter delega a
+atualizacao para a conexao e nao executa `Close/Open` diretamente.
+
+```pascal
+type
+  TMinhaConexaoUC = class(TInterfacedObject, IUCDataConnection,
+    IUCDataConnectionRefresh)
+  public
+    procedure RefreshDataSet(DataSet: TDataSet);
+  end;
+
+procedure TMinhaConexaoUC.RefreshDataSet(DataSet: TDataSet);
+begin
+  TMeuDataSet(DataSet).Reload;
+end;
+```
+
+O metodo deve recarregar o mesmo objeto recebido. Assim, formularios e data
+sources continuam ligados ao dataset e a conexao decide como obter novamente
+os dados.
+
 ## Regra de propriedade dos datasets
 
 `IUCDataConnection.CreateDataSet` deve devolver um dataset novo. O chamador

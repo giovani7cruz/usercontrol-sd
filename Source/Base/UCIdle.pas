@@ -173,7 +173,7 @@ begin
       FThIdle := TThUCIdle.Create(True);
       FThIdle.CurrentMilisec := 0;
       FThIdle.UCIdle := Self;
-      FThIdle.Resume;
+      FThIdle.Start;
       {$ENDIF}
     end;
 end;

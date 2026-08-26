@@ -101,6 +101,7 @@ type
     procedure OrderBy(const DataSet: TDataSet; const FieldName: string); virtual;
     procedure CloseDataSet(DataSet : TDataSet); virtual;
     procedure OpenDataSet(DataSet : TDataSet); virtual;
+    procedure RefreshDataSet(DataSet: TDataSet); virtual;
   end;
 
 implementation
@@ -117,6 +118,13 @@ procedure TUCDataConnector.OpenDataSet(DataSet: TDataSet);
 begin
   ValidateDataSet(DataSet, 'OpenDataSet');
   DataSet.Open;
+end;
+
+procedure TUCDataConnector.RefreshDataSet(DataSet: TDataSet);
+begin
+  ValidateDataSet(DataSet, 'RefreshDataSet');
+  CloseDataSet(DataSet);
+  OpenDataSet(DataSet);
 end;
 
 procedure TUCDataConnector.OrderBy(const DataSet: TDataSet; const FieldName: string);

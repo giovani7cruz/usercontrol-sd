@@ -10,9 +10,11 @@ uses
   UCConnectionAdapter in '..\..\Source\Base\UCConnectionAdapter.pas';
 
 type
-  TFakeDataConnection = class(TInterfacedObject, IUCDataConnection)
+  TFakeDataConnection = class(TInterfacedObject, IUCDataConnection,
+    IUCDataConnectionRefresh)
   private
     FExecutedSQL: string;
+    FRefreshCount: Integer;
   public
     procedure Execute(const SQL: string);
     function CreateDataSet(const SQL: string): TDataSet;
@@ -21,7 +23,9 @@ type
     function FieldExists(const TableName, FieldName: string): Boolean;
     function DatabaseObjectName: string;
     function TransactionObjectName: string;
+    procedure RefreshDataSet(DataSet: TDataSet);
     property ExecutedSQL: string read FExecutedSQL;
+    property RefreshCount: Integer read FRefreshCount;
   end;
 
 procedure Check(Condition: Boolean; const MessageText: string);
@@ -54,6 +58,11 @@ end;
 function TFakeDataConnection.IsConnected: Boolean;
 begin
   Result := True;
+end;
+
+procedure TFakeDataConnection.RefreshDataSet(DataSet: TDataSet);
+begin
+  Inc(FRefreshCount);
 end;
 
 function TFakeDataConnection.TableExists(const TableName: string): Boolean;
@@ -117,6 +126,9 @@ begin
         Check(DataSet.Owner = nil, 'DataSet deve pertencer ao chamador');
         Check(DataSet.FieldByName('SQL').AsString = 'select * from ucusers',
           'CreateDataSet nao foi delegado');
+        Adapter.RefreshDataSet(DataSet);
+        Check(ConnectionObject.RefreshCount = 1,
+          'RefreshDataSet nao foi delegado');
       finally
         DataSet.Free;
       end;

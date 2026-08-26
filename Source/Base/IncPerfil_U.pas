@@ -170,8 +170,7 @@ begin
   if FDataSetPerfilUsuario <> nil then
   begin
     { Giovani da Cruz (G7) // Alteração para adequação de alguns connectores }
-    FUserControl.DataConnector.CloseDataSet(FDataSetPerfilUsuario);
-    FUserControl.DataConnector.OpenDataSet(FDataSetPerfilUsuario);
+    FUserControl.DataConnector.RefreshDataSet(FDataSetPerfilUsuario);
 
     FDataSetPerfilUsuario.Locate('IDUser', FNewIdUser, []);
   end;

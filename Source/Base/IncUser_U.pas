@@ -360,8 +360,7 @@ begin
         end;
       end;
 
-      FUserControl.DataConnector.CloseDataSet(FDataSetCadastroUsuario);
-      FUserControl.DataConnector.OpenDataSet(FDataSetCadastroUsuario);
+      FUserControl.DataConnector.RefreshDataSet(FDataSetCadastroUsuario);
 
       FDataSetCadastroUsuario.Locate('idUser', vNovoIDUsuario, []);
       Close;
@@ -555,8 +554,7 @@ begin
     { Alteração necessaria para alguns conectors }
     vAux := ComboPerfil.KeyValue;
 
-    FUserControl.DataConnector.CloseDataSet(ComboPerfil.ListSource.DataSet);
-    FUserControl.DataConnector.OpenDataSet(ComboPerfil.ListSource.DataSet);
+    FUserControl.DataConnector.RefreshDataSet(ComboPerfil.ListSource.DataSet);
 
     ComboPerfil.KeyValue := Null;
     ComboPerfil.KeyValue := vAux;

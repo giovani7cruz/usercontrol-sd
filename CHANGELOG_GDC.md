@@ -13,6 +13,10 @@
   datasets com `Owner = nil`.
 - Adicionado teste com conexao falsa para validar delegacao, erros de
   configuracao e propriedade do dataset.
+- Adicionada a extensao opcional `IUCDataConnectionRefresh` para conexoes que
+  materializam dados por REST/RPC sem depender do ciclo `Close/Open`.
+- Os fluxos de usuarios e perfis agora usam `RefreshDataSet`, preservando a
+  estrategia de recarga definida pela conexao da aplicacao.
 
 ### Instalador em unidades de rede mapeadas
 
@@ -58,6 +62,9 @@
   evitando vazamentos a cada login ou reabertura do cadastro de usuários.
 - Corrigida a identificação de erros `TABLE UNKNOWN`/`COLUMN UNKNOWN` em
   `pUCGeral`; demais falhas deixam de ser descartadas por engano.
+- Removida a criacao direta da classe abstrata `TDataSet` no editor de perfis;
+  datasets opcionais de perfil agora sao verificados antes do acesso.
+- Substituidas as chamadas depreciadas de `TThread.Resume` por `Start`.
 
 ### Segurança
 
