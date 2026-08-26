@@ -71,6 +71,12 @@
   do usuario que esta executando o cadastro.
 - Consultas temporarias passam a liberar seus datasets tambem quando ocorre
   uma excecao durante leitura, descriptografia ou atualizacao da interface.
+- `TUCUsersLogged` passa a manter sessoes por heartbeat, com data UTC e
+  expiracao automatica de registros abandonados.
+- A verificacao e a listagem de sessoes agora consideram o `ApplicationID` e
+  removem registros do formato legado.
+- A tela de usuarios logados apresenta o timestamp UTC convertido para o
+  horario local e removeu um `JOIN` de perfil que nao era utilizado.
 
 ### Segurança
 

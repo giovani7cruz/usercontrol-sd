@@ -103,6 +103,9 @@ type
   private
     DSUserLogados: TDataset;
     UCMes: TUCApplicationMessage;
+    procedure ConfigureSessionFields;
+    procedure SessionDateGetText(Sender: TField; var Text: String;
+      DisplayText: Boolean);
   public
     FUserControl: TUserControl;
     procedure SetWindow;
@@ -112,13 +115,58 @@ type
 implementation
 
 uses
-  UCMessages;
+  UCMessages, DateUtils;
 
 {$IFDEF FPC}
 {$R *.lfm}
 {$ELSE}
 {$R *.dfm}
 {$ENDIF}
+
+procedure TUCFrame_UsersLogged.ConfigureSessionFields;
+var
+  Field: TField;
+begin
+  if not Assigned(DSUserLogados) then
+    Exit;
+
+  Field := DSUserLogados.FindField('DATA');
+  if Assigned(Field) then
+    Field.OnGetText := SessionDateGetText;
+end;
+
+procedure TUCFrame_UsersLogged.SessionDateGetText(Sender: TField;
+  var Text: String; DisplayText: Boolean);
+var
+  RawValue: String;
+  DatePart: TDateTime;
+  TimePart: TDateTime;
+  Value: TDateTime;
+begin
+  RawValue := Sender.AsString;
+  if not DisplayText then
+  begin
+    Text := RawValue;
+    Exit;
+  end;
+
+  if (Length(RawValue) = 14) and
+    TryEncodeDate(StrToIntDef(Copy(RawValue, 1, 4), 0),
+      StrToIntDef(Copy(RawValue, 5, 2), 0),
+      StrToIntDef(Copy(RawValue, 7, 2), 0), DatePart) and
+    TryEncodeTime(StrToIntDef(Copy(RawValue, 9, 2), 0),
+      StrToIntDef(Copy(RawValue, 11, 2), 0),
+      StrToIntDef(Copy(RawValue, 13, 2), 0), 0, TimePart) then
+  begin
+    Value := DatePart + TimePart;
+    {$IFNDEF FPC}
+    Value := TTimeZone.Local.ToLocalTime(Value);
+    {$ENDIF}
+    Text := FormatDateTime('dd/mm/yyyy hh:nn:ss', Value);
+  end
+  else
+    Text := RawValue;
+end;
 
 procedure TUCFrame_UsersLogged.SetWindow;
 const
@@ -132,8 +180,7 @@ const
     '  L.%s as DATA ' +
     'from ' +
     '  %s L inner join ' +
-    '  %s U on U.%s = L.%s left join ' +
-    '  %s P on P.%s = U.%s ' +
+    '  %s U on U.%s = L.%s ' +
     'where ' +
     '  L.%s = %s ';
 var
@@ -148,13 +195,14 @@ begin
       UCMes := TUCApplicationMessage(Form.Components[I]);
   BitMsg.Visible := UCMes <> nil;
 
+  FUserControl.UsersLogged.RemoveExpiredSessions;
   with FUserControl do
   begin
     SQLStmt := Format(PreSQLStmt, [
       TableUsersLogged.FieldLogonID, TableUsers.FieldUserName, TableUsers.FieldUserId, TableUsers.FieldLogin,
       TableUsersLogged.FieldMachineName, TableUsersLogged.FieldData, TableUsersLogged.TableName, TableUsers.TableName,
-      TableUsers.FieldUserId, TableUsersLogged.FieldUserId, TableUsers.TableName, TableUsers.FieldUserId,
-      TableUsers.FieldProfile, TableUsersLogged.FieldApplicationID, QuotedStr(ApplicationID)
+      TableUsers.FieldUserId, TableUsersLogged.FieldUserId,
+      TableUsersLogged.FieldApplicationID, QuotedStr(ApplicationID)
     ]);
 
     DSUserLogados := DataConnector.UCGetSQLDataset(SQLStmt);
@@ -173,6 +221,7 @@ begin
 
   end;
   dsDados.Dataset := DSUserLogados;
+  ConfigureSessionFields;
 end;
 
 procedure TUCFrame_UsersLogged.BitRefreshClick(Sender: TObject);
@@ -180,7 +229,9 @@ begin
   try
     Screen.Cursor := crHourGlass;
 
+    FUserControl.UsersLogged.RemoveExpiredSessions;
     FUserControl.DataConnector.RefreshDataSet(dsDados.Dataset);
+    ConfigureSessionFields;
   finally
     Screen.Cursor := crDefault;
   end;

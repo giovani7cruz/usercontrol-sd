@@ -82,6 +82,7 @@ uses
   ActnMenus,
   ExtActns,
   {$ENDIF}
+  ExtCtrls,
   Classes,
   Controls,
   DB,
@@ -748,16 +749,38 @@ type
   private
     FUserControl: TUserControl;
     FAtive: Boolean;
+    FHeartbeatTimer: TTimer;
+    FHeartbeatInterval: Integer;
+    FSessionTimeout: Integer;
+    FLastHeartbeat: TDateTime;
+    FLastCleanup: TDateTime;
+    FLastError: String;
     procedure AddCurrentUser;
+    procedure DeleteCurrentSession;
+    procedure HeartbeatTimer(Sender: TObject);
+    procedure InsertCurrentSession;
+    procedure SetActive(const Value: Boolean);
+    procedure SetHeartbeatInterval(const Value: Integer);
+    procedure SetSessionTimeout(const Value: Integer);
+    procedure UpdateCurrentSession;
+    function CurrentUtc: TDateTime;
+    function CurrentTimestamp: String;
+    function ExpirationTimestamp: String;
   public
     constructor Create(AOwner: TComponent);
     destructor Destroy; override;
     procedure Assign(Source: TPersistent); override;
     procedure DelCurrentUser;
     procedure CriaTableUserLogado;
+    procedure RemoveExpiredSessions;
     function UsuarioJaLogado(ID: Integer): Boolean;
+    property LastError: String read FLastError;
   published
-    property Active: Boolean read FAtive write FAtive default True;
+    property Active: Boolean read FAtive write SetActive default True;
+    property HeartbeatInterval: Integer read FHeartbeatInterval
+      write SetHeartbeatInterval default 30000;
+    property SessionTimeout: Integer read FSessionTimeout
+      write SetSessionTimeout default 120;
   end;
 
 function Decrypt(const S: ansistring; Key: Word): ansistring;
@@ -780,7 +803,8 @@ uses
   pUCGeral,
   TrocaSenha_U,
   UserPermis_U,
-  StrUtils;
+  StrUtils,
+  DateUtils;
 
 {$IFDEF DELPHI9_UP} {$REGION 'TUSerControl'} {$ENDIF}
 { TUserControl }
@@ -4231,25 +4255,24 @@ end;
 { TUserLogged }
 
 procedure TUCUsersLogged.AddCurrentUser;
-var
-  SQLstmt: String;
 begin
-  if not Active then
+  if not Active or not Assigned(FUserControl) or
+    not Assigned(FUserControl.DataConnector) then
     Exit;
 
-  with FUserControl do
-  begin
-    CurrentUser.IdLogon := TUCGUID.NovoGUIDString;
-    SQLstmt :=
-      Format('INSERT INTO %s (%s, %s, %s, %s, %s) Values( %s, %d, %s, %s, %s)',
-      [TableUsersLogged.TableName, TableUsersLogged.FieldLogonID,
-      TableUsersLogged.FieldUserID, TableUsersLogged.FieldApplicationID,
-      TableUsersLogged.FieldMachineName, TableUsersLogged.FieldData,
-      QuotedStr(CurrentUser.IdLogon), CurrentUser.UserID,
-      QuotedStr(ApplicationID), QuotedStr(GetLocalComputerName),
-      QuotedStr(FormatDateTime('dd/mm/yy hh:mm', now))]);
-    if Assigned(DataConnector) then
-      DataConnector.UCExecSQL(SQLstmt);
+  FHeartbeatTimer.Enabled := False;
+  if FUserControl.CurrentUser.IdLogon <> '' then
+    DeleteCurrentSession;
+  FUserControl.CurrentUser.IdLogon := TUCGUID.NovoGUIDString;
+  try
+    RemoveExpiredSessions;
+    InsertCurrentSession;
+    FLastHeartbeat := Now;
+    FLastError := '';
+    FHeartbeatTimer.Enabled := True;
+  except
+    FUserControl.CurrentUser.IdLogon := '';
+    raise;
   end;
 end;
 
@@ -4257,7 +4280,9 @@ procedure TUCUsersLogged.Assign(Source: TPersistent);
 begin
   if Source is TUCUsersLogged then
   begin
-    Self.Active := TUCUsersLogged(Source).Active;
+    HeartbeatInterval := TUCUsersLogged(Source).HeartbeatInterval;
+    SessionTimeout := TUCUsersLogged(Source).SessionTimeout;
+    Active := TUCUsersLogged(Source).Active;
   end
   else
     inherited;
@@ -4267,7 +4292,27 @@ constructor TUCUsersLogged.Create(AOwner: TComponent);
 begin
   inherited Create;
   FUserControl := TUserControl(AOwner);
-  Self.FAtive := True;
+  FAtive := True;
+  FHeartbeatInterval := 30000;
+  FSessionTimeout := 120;
+  FHeartbeatTimer := TTimer.Create(nil);
+  FHeartbeatTimer.Enabled := False;
+  FHeartbeatTimer.Interval := FHeartbeatInterval;
+  FHeartbeatTimer.OnTimer := HeartbeatTimer;
+end;
+
+function TUCUsersLogged.CurrentTimestamp: String;
+begin
+  Result := FormatDateTime('yyyymmddhhnnss', CurrentUtc);
+end;
+
+function TUCUsersLogged.CurrentUtc: TDateTime;
+begin
+  {$IFDEF FPC}
+  Result := Now;
+  {$ELSE}
+  Result := TTimeZone.Local.ToUniversalTime(Now);
+  {$ENDIF}
 end;
 
 procedure TUCUsersLogged.CriaTableUserLogado;
@@ -4294,59 +4339,205 @@ begin
     FUserControl.DataConnector.UCExecSQL(SQLstmt);
 end;
 
-procedure TUCUsersLogged.DelCurrentUser;
+procedure TUCUsersLogged.DeleteCurrentSession;
 var
   SQLstmt: String;
 begin
-  if not Active then
-    Exit;
-
-  if not Assigned(FUserControl) or not Assigned(FUserControl.DataConnector) then
+  if not Assigned(FUserControl) or not Assigned(FUserControl.DataConnector) or
+    (FUserControl.CurrentUser.IdLogon = '') then
     Exit;
 
   with FUserControl do
-  begin
-    SQLstmt := Format('DELETE FROM %s WHERE %s = %s',
+    SQLstmt := Format('DELETE FROM %s WHERE %s = %s AND %s = %s',
       [TableUsersLogged.TableName, TableUsersLogged.FieldLogonID,
-      QuotedStr(CurrentUser.IdLogon)]);
+      QuotedStr(CurrentUser.IdLogon), TableUsersLogged.FieldApplicationID,
+      QuotedStr(ApplicationID)]);
+  FUserControl.DataConnector.UCExecSQL(SQLstmt);
+end;
 
-    if Assigned(DataConnector) then
-      DataConnector.UCExecSQL(SQLstmt);
+procedure TUCUsersLogged.DelCurrentUser;
+begin
+  FHeartbeatTimer.Enabled := False;
+  if not Assigned(FUserControl) then
+    Exit;
+
+  try
+    DeleteCurrentSession;
+  finally
+    FUserControl.CurrentUser.IdLogon := '';
+    FLastHeartbeat := 0;
+    FLastCleanup := 0;
   end;
 end;
 
 destructor TUCUsersLogged.Destroy;
 begin
+  FHeartbeatTimer.Free;
   inherited Destroy;
+end;
+
+function TUCUsersLogged.ExpirationTimestamp: String;
+begin
+  Result := FormatDateTime('yyyymmddhhnnss',
+    IncSecond(CurrentUtc, -FSessionTimeout));
+end;
+
+procedure TUCUsersLogged.HeartbeatTimer(Sender: TObject);
+begin
+  FHeartbeatTimer.Enabled := False;
+  try
+    if not Active or not Assigned(FUserControl) or
+      (FUserControl.CurrentUser.UserID = 0) or
+      (FUserControl.CurrentUser.IdLogon = '') then
+      Exit;
+
+    try
+      if (FLastHeartbeat = 0) or
+        (SecondsBetween(Now, FLastHeartbeat) >= FSessionTimeout) then
+      begin
+        DeleteCurrentSession;
+        InsertCurrentSession;
+      end
+      else
+        UpdateCurrentSession;
+
+      if (FLastCleanup = 0) or
+        (SecondsBetween(Now, FLastCleanup) >= FSessionTimeout) then
+        RemoveExpiredSessions;
+      FLastHeartbeat := Now;
+      FLastError := '';
+    except
+      on E: Exception do
+        FLastError := E.Message;
+    end;
+  finally
+    FHeartbeatTimer.Enabled := Active and Assigned(FUserControl) and
+      (FUserControl.CurrentUser.UserID <> 0) and
+      (FUserControl.CurrentUser.IdLogon <> '');
+  end;
+end;
+
+procedure TUCUsersLogged.InsertCurrentSession;
+var
+  SQLstmt: String;
+begin
+  with FUserControl do
+    SQLstmt :=
+      Format('INSERT INTO %s (%s, %s, %s, %s, %s) VALUES (%s, %d, %s, %s, %s)',
+      [TableUsersLogged.TableName, TableUsersLogged.FieldLogonID,
+      TableUsersLogged.FieldUserID, TableUsersLogged.FieldApplicationID,
+      TableUsersLogged.FieldMachineName, TableUsersLogged.FieldData,
+      QuotedStr(CurrentUser.IdLogon), CurrentUser.UserID,
+      QuotedStr(ApplicationID), QuotedStr(GetLocalComputerName),
+      QuotedStr(CurrentTimestamp)]);
+  FUserControl.DataConnector.UCExecSQL(SQLstmt);
+end;
+
+procedure TUCUsersLogged.RemoveExpiredSessions;
+var
+  SQLstmt: String;
+begin
+  if not Active or not Assigned(FUserControl) or
+    not Assigned(FUserControl.DataConnector) then
+    Exit;
+
+  with FUserControl do
+    SQLstmt := Format(
+      'DELETE FROM %s WHERE %s = %s AND (%s IS NULL OR %s < %s OR %s LIKE %s)',
+      [TableUsersLogged.TableName, TableUsersLogged.FieldApplicationID,
+      QuotedStr(ApplicationID), TableUsersLogged.FieldData,
+      TableUsersLogged.FieldData, QuotedStr(ExpirationTimestamp),
+      TableUsersLogged.FieldData, QuotedStr('%/%')]);
+  FUserControl.DataConnector.UCExecSQL(SQLstmt);
+  FLastCleanup := Now;
+end;
+
+procedure TUCUsersLogged.SetActive(const Value: Boolean);
+begin
+  if FAtive = Value then
+    Exit;
+
+  if not Value then
+  begin
+    DelCurrentUser;
+    FAtive := False;
+  end
+  else
+  begin
+    FAtive := True;
+    if Assigned(FUserControl) and (FUserControl.CurrentUser.UserID <> 0) then
+      AddCurrentUser;
+  end;
+end;
+
+procedure TUCUsersLogged.SetHeartbeatInterval(const Value: Integer);
+begin
+  if Value < 1000 then
+    FHeartbeatInterval := 1000
+  else
+    FHeartbeatInterval := Value;
+  FHeartbeatTimer.Interval := FHeartbeatInterval;
+
+  if FSessionTimeout <= (FHeartbeatInterval div 1000) then
+    FSessionTimeout := (FHeartbeatInterval div 1000) * 3;
+end;
+
+procedure TUCUsersLogged.SetSessionTimeout(const Value: Integer);
+var
+  MinimumTimeout: Integer;
+begin
+  MinimumTimeout := (FHeartbeatInterval div 1000) * 2;
+  if MinimumTimeout < 10 then
+    MinimumTimeout := 10;
+
+  if Value < MinimumTimeout then
+    FSessionTimeout := MinimumTimeout
+  else
+    FSessionTimeout := Value;
+end;
+
+procedure TUCUsersLogged.UpdateCurrentSession;
+var
+  SQLstmt: String;
+begin
+  with FUserControl do
+    SQLstmt := Format('UPDATE %s SET %s = %s WHERE %s = %s AND %s = %s',
+      [TableUsersLogged.TableName, TableUsersLogged.FieldData,
+      QuotedStr(CurrentTimestamp), TableUsersLogged.FieldLogonID,
+      QuotedStr(CurrentUser.IdLogon), TableUsersLogged.FieldApplicationID,
+      QuotedStr(ApplicationID)]);
+  FUserControl.DataConnector.UCExecSQL(SQLstmt);
 end;
 
 function TUCUsersLogged.UsuarioJaLogado(ID: Integer): Boolean;
 var
   SQLstmt: String;
-  FDataset: TDataSet;
+  DataSet: TDataSet;
 begin
   Result := False;
   if not Assigned(FUserControl) or not Assigned(FUserControl.DataConnector) then
     Exit;
 
+  RemoveExpiredSessions;
   with FUserControl do
   begin
-    SQLstmt := Format('SELECT * FROM %s WHERE %s = %s',
-      [TableUsersLogged.TableName, TableUsersLogged.FieldUserID,
-      QuotedStr(IntToStr(ID))]);
+    SQLstmt := Format('SELECT %s FROM %s WHERE %s = %d AND %s = %s',
+      [TableUsersLogged.FieldLogonID, TableUsersLogged.TableName,
+      TableUsersLogged.FieldUserID, ID,
+      TableUsersLogged.FieldApplicationID, QuotedStr(ApplicationID)]);
 
-    if Assigned(DataConnector) then
-    begin
-      FDataset := DataConnector.UCGetSQLDataset(SQLstmt);
-      try
-        Result := not FDataset.IsEmpty;
-      finally
-        FDataset.Free;
-      end;
+    if CurrentUser.IdLogon <> '' then
+      SQLstmt := SQLstmt + Format(' AND %s <> %s',
+        [TableUsersLogged.FieldLogonID, QuotedStr(CurrentUser.IdLogon)]);
+
+    DataSet := DataConnector.UCGetSQLDataset(SQLstmt);
+    try
+      Result := not DataSet.IsEmpty;
+    finally
+      DataSet.Free;
     end;
   end;
 end;
-
 {$IFDEF DELPHI9_UP} {$ENDREGION} {$ENDIF}
 {$IFDEF DELPHI9_UP} {$REGION 'TUCUserLogoff'} {$ENDIF}
 { TUCUserLogoff }
