@@ -436,8 +436,17 @@ object UCFrame_User: TUCFrame_User
         Width = 130
         Height = 25
         Caption = 'Aplicar filtro'
-        TabOrder = 3
+        TabOrder = 4
         OnClick = btApplyFilterClick
+      end
+      object ckShowInactive: TCheckBox
+        Left = 8
+        Top = 64
+        Width = 180
+        Height = 17
+        Caption = 'Exibir usuários inativos'
+        TabOrder = 3
+        OnClick = ckShowInactiveClick
       end
     end
   end

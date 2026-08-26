@@ -86,6 +86,7 @@ uses
   Messages,
   Spin,
   StdCtrls,
+  StrUtils,
   SysUtils,
   {$IFDEF FPC}
   {$IFDEF WINDOWS}Windows,{$ELSE}LCLType,{$ENDIF}
@@ -128,6 +129,7 @@ type
     Label3: TLabel;
     ImageList1: TImageList;
     Shape1: TShape;
+    ckShowInactive: TCheckBox;
     procedure btAdicClick(Sender: TObject);
     procedure BtAltClick(Sender: TObject);
     procedure BtAcessClick(Sender: TObject);
@@ -135,8 +137,12 @@ type
     procedure BtExcluiClick(Sender: TObject);
     procedure DbGridUserTitleClick(Column: TColumn);
     procedure btApplyFilterClick(Sender: TObject);
+    procedure ckShowInactiveClick(Sender: TObject);
   private
+    FTextFilterActive: Boolean;
+    procedure ApplyUserFilter;
     procedure ChangeButtonFilter;
+    procedure DataSetFilterRecord(DataSet: TDataSet; var Accept: Boolean);
   protected
     FormSenha: TCustomForm;
     FfrmIncluirUsuario: TfrmIncluirUsuario;
@@ -176,6 +182,7 @@ begin
 
   FfrmIncluirUsuario.ShowModal;
   FreeAndNil(FfrmIncluirUsuario);
+  ApplyUserFilter;
 end;
 
 procedure TUCFrame_User.BtAltClick(Sender: TObject);
@@ -209,11 +216,17 @@ begin
     ShowModal;
   end;
   FreeAndNil(FfrmIncluirUsuario);
+  ApplyUserFilter;
 end;
 
 procedure TUCFrame_User.btApplyFilterClick(Sender: TObject);
 begin
   ChangeButtonFilter;
+end;
+
+procedure TUCFrame_User.ckShowInactiveClick(Sender: TObject);
+begin
+  ApplyUserFilter;
 end;
 
 procedure TUCFrame_User.BtExcluiClick(Sender: TObject);
@@ -270,6 +283,7 @@ begin
 
     { Giovani da Cruz (G7) // Alteração para adequação de alguns connectores }
     FUsercontrol.DataConnector.RefreshDataSet(FDataSetCadastroUsuario);
+    ApplyUserFilter;
   end;
 end;
 
@@ -308,57 +322,84 @@ begin
   FreeAndNil(FormSenha);
 end;
 
+procedure TUCFrame_User.ApplyUserFilter;
+begin
+  if not Assigned(DataUser.DataSet) then
+    Exit;
+  if not DataUser.DataSet.Active then
+    Exit;
+
+  DataUser.DataSet.DisableControls;
+  try
+    DataUser.DataSet.Filtered := False;
+    DataUser.DataSet.OnFilterRecord := DataSetFilterRecord;
+    DataUser.DataSet.Filtered := True;
+  finally
+    DataUser.DataSet.EnableControls;
+  end;
+
+  FDataSetCadastroUsuarioAfterScroll(DataUser.DataSet);
+end;
+
 procedure TUCFrame_User.ChangeButtonFilter;
 var
-  Filter, btCaption: string;
-  Filtered: Boolean;
   IndexImage: Integer;
-
-  procedure SetFilter(AFilter: string);
-  var
-    Separetor: string;
-  begin
-    Separetor := '';
-    if Length(Trim(Filter)) > 0 then
-      Separetor := ' and ';
-
-    Filter := Filter + Separetor + AFilter;
-  end;
 begin
-  Filter := '';
-  Filtered := DataUser.DataSet.Filtered;
-  DataUser.DataSet.Filtered := False;
-  DataUser.DataSet.Filter := Filter;
-  Nome.Enabled := Filtered;
-  Login.Enabled := Filtered;
-  Email.Enabled := Filtered;
+  FTextFilterActive := not FTextFilterActive;
+  Nome.Enabled := not FTextFilterActive;
+  Login.Enabled := not FTextFilterActive;
+  Email.Enabled := not FTextFilterActive;
 
-  if Filtered then
+  if FTextFilterActive then
   begin
-    IndexImage := 0;
-    btCaption := 'Aplicar Filtro';
+    IndexImage := 1;
+    btApplyFilter.Caption := FUsercontrol.UserSettings.UsersForm.BtRemoveFilter;
   end
   else
   begin
-    if Length(Trim(Nome.Text)) > 0 then
-      SetFilter('Nome like ' + QuotedStr('%' + Nome.Text + '%'));
-
-    if Length(Trim(Login.Text)) > 0 then
-      SetFilter('Login like ' + QuotedStr('%' + Login.Text + '%'));
-
-    if Length(Trim(Email.Text)) > 0 then
-      SetFilter('Email like ' + QuotedStr('%' + Email.Text + '%'));
-
-    DataUser.DataSet.Filter := Filter;
-    DataUser.DataSet.Filtered := True;
-    IndexImage := 1;
-    btCaption := 'Remover Filtro';
+    IndexImage := 0;
+    btApplyFilter.Caption := FUsercontrol.UserSettings.UsersForm.BtApplyFilter;
   end;
 
   btApplyFilter.Glyph := nil;
   ImageList1.GetBitmap(IndexImage, btApplyFilter.Glyph);
-  btApplyFilter.Caption := btCaption;
-  FDataSetCadastroUsuarioAfterScroll(DataUser.DataSet);
+  ApplyUserFilter;
+end;
+
+procedure TUCFrame_User.DataSetFilterRecord(DataSet: TDataSet;
+  var Accept: Boolean);
+var
+  Field: TField;
+begin
+  Accept := True;
+
+  if not ckShowInactive.Checked then
+  begin
+    Field := DataSet.FindField('UserInative');
+    if Assigned(Field) and not Field.IsNull then
+      Accept := Field.AsInteger = 0;
+  end;
+
+  if not Accept or not FTextFilterActive then
+    Exit;
+
+  if Trim(Nome.Text) <> '' then
+  begin
+    Field := DataSet.FindField('Nome');
+    Accept := Assigned(Field) and ContainsText(Field.AsString, Trim(Nome.Text));
+  end;
+
+  if Accept and (Trim(Login.Text) <> '') then
+  begin
+    Field := DataSet.FindField('Login');
+    Accept := Assigned(Field) and ContainsText(Field.AsString, Trim(Login.Text));
+  end;
+
+  if Accept and (Trim(Email.Text) <> '') then
+  begin
+    Field := DataSet.FindField('Email');
+    Accept := Assigned(Field) and ContainsText(Field.AsString, Trim(Email.Text));
+  end;
 end;
 
 procedure TUCFrame_User.DbGridUserTitleClick(Column: TColumn);
@@ -462,6 +503,7 @@ begin
 
     { Giovani da Cruz (G7) // Alteração para adequação de alguns connectores }
     FUsercontrol.DataConnector.RefreshDataSet(FDataSetCadastroUsuario);
+    ApplyUserFilter;
 
     FDataSetCadastroUsuario.Locate('idUser', UserPermis.FTempIdUser, []);
   end;
@@ -469,15 +511,27 @@ end;
 
 procedure TUCFrame_User.FDataSetCadastroUsuarioAfterScroll(DataSet: TDataSet);
 begin
+  if not Assigned(DataSet) then
+    Exit;
+
+  if not DataSet.Active or DataSet.IsEmpty then
+  begin
+    BtAlt.Enabled := False;
+    BtExclui.Enabled := False;
+    BtPass.Enabled := False;
+    BtAcess.Enabled := False;
+    Exit;
+  end;
+
+  BtAlt.Enabled := True;
   if (FUsercontrol.User.ProtectAdministrator) and
     (DataSet.FieldByName('Login').AsString = FUsercontrol.Login.
     InitialLogin.User) then
   begin
     BtExclui.Enabled := False;
     BtPass.Enabled := False;
-    if FUsercontrol.CurrentUser.Username <> FUsercontrol.Login.InitialLogin.User
-    then
-      BtAcess.Enabled := False;
+    BtAcess.Enabled := FUsercontrol.CurrentUser.Username =
+      FUsercontrol.Login.InitialLogin.User;
   end
   else
   begin
@@ -490,7 +544,11 @@ end;
 procedure TUCFrame_User.SetWindow;
 begin
   FDataSetCadastroUsuario.AfterScroll := FDataSetCadastroUsuarioAfterScroll;
-  FDataSetCadastroUsuarioAfterScroll(FDataSetCadastroUsuario);
+  FTextFilterActive := False;
+  ckShowInactive.Checked := False;
+  Nome.Enabled := True;
+  Login.Enabled := True;
+  Email.Enabled := True;
   with FUsercontrol.UserSettings.UsersForm do
   begin
     DbGridUser.Columns[0].Title.Caption := ColName;
@@ -503,8 +561,10 @@ begin
     BtAcess.Caption := BtRights;
     BtPass.Caption := BtPassword;
     Self.btApplyFilter.Caption := btApplyFilter;
+    ckShowInactive.Caption := ShowInactive;
   end;
 
+  ApplyUserFilter;
 end;
 
 procedure TUCFrame_User.SetWindowUser(Adicionar: Boolean);

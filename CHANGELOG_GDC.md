@@ -77,6 +77,8 @@
   removem registros do formato legado.
 - A tela de usuarios logados apresenta o timestamp UTC convertido para o
   horario local e removeu um `JOIN` de perfil que nao era utilizado.
+- A lista de usuarios agora oculta inativos por padrao e oferece uma opcao para
+  exibi-los, combinavel com os filtros de nome, login e e-mail.
 
 ### Segurança
 

@@ -253,6 +253,8 @@ begin
     PromptDelete := GetTranslate(DestSettings.Language, PromptDelete, 'Const_Cad_ConfirmaExcluir');
     PromptDelete_WindowCaption := GetTranslate(DestSettings.Language, PromptDelete_WindowCaption, 'Const_Cad_ConfirmaDelete_WindowCaption');
     BtApplyFilter := GetTranslate(DestSettings.Language, BtApplyFilter, 'Const_Cad_BtApplyFilter');
+    BtRemoveFilter := GetTranslate(DestSettings.Language, BtRemoveFilter, 'Const_Cad_BtRemoveFilter');
+    ShowInactive := GetTranslate(DestSettings.Language, ShowInactive, 'Const_Cad_ShowInactive');
   end;
 
   with DestSettings.UsersProfile do
@@ -539,6 +541,8 @@ begin
     PromptDelete := GetTranslate(DestSettings.Language, '', 'Const_Cad_ConfirmaExcluir');
     PromptDelete_WindowCaption := GetTranslate(DestSettings.Language, '', 'Const_Cad_ConfirmaDelete_WindowCaption');
     BtApplyFilter := GetTranslate(DestSettings.Language, '', 'Const_Cad_BtApplyFilter');
+    BtRemoveFilter := GetTranslate(DestSettings.Language, '', 'Const_Cad_BtRemoveFilter');
+    ShowInactive := GetTranslate(DestSettings.Language, '', 'Const_Cad_ShowInactive');
   end;
 
   with DestSettings.UsersProfile do

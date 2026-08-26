@@ -295,6 +295,8 @@ type
     FConfExc: String;
     FPromptDelete_WindowCaption: String;
     FBtApplyFilter: String; // added by fduenas
+    FBtRemoveFilter: String;
+    FShowInactive: String;
   protected
 
   public
@@ -316,6 +318,8 @@ type
     property BtPassword: String read FBtPass write FBtPass;
     property BtClose: String read FBtClose write FBtClose;
     property BtApplyFilter: String read FBtApplyFilter write FBtApplyFilter;
+    property BtRemoveFilter: String read FBtRemoveFilter write FBtRemoveFilter;
+    property ShowInactive: String read FShowInactive write FShowInactive;
   end;
 
   TUCLogControlFormMSG = class(TPersistent)
@@ -701,6 +705,8 @@ begin
       Self.PromptDelete := PromptDelete;
       Self.PromptDelete_WindowCaption := PromptDelete_WindowCaption;
       Self.BtApplyFilter := BtApplyFilter;
+      Self.BtRemoveFilter := BtRemoveFilter;
+      Self.ShowInactive := ShowInactive;
       // added by fduenas
     end
   else

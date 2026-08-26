@@ -85,7 +85,7 @@ ResourceString
 	RsENoSplashServices = 'Unable to get Borland Splash Services';
 
 const
-  MaxArray = 233;
+  MaxArray = 235;
 
   {$IFDEF FPC}
   UC_PTBR: Array [0 .. MaxArray, 0 .. 1] of utf8string = (
@@ -324,6 +324,8 @@ const
     ('Const_Inc_StatusDisabled', 'Inativo'),
     ('Const_Inc_LabelImage', 'Imagem'),
     ('Const_Cad_BtApplyFilter', 'Aplicar filtro'),
+    ('Const_Cad_BtRemoveFilter', 'Remover filtro'),
+    ('Const_Cad_ShowInactive', 'Exibir usuários inativos'),
     ('Const_Men_Cannot_Del_User_Logon', 'Impossível excluir usuários logados!'),
     ('Const_Men_Select_Profile', 'Favor selecionar o perfil!'),
     ('Const_Err_Image_Too_Large', 'Imagem deve ser menor que %s bytes')
@@ -565,6 +567,8 @@ const
     ('Const_Inc_StatusDisabled', 'Disabled'),
     ('Const_Inc_LabelImage', 'Image'),
     ('Const_Cad_BtApplyFilter', 'Apply filter'),
+    ('Const_Cad_BtRemoveFilter', 'Remove filter'),
+    ('Const_Cad_ShowInactive', 'Show inactive users'),
     ('Const_Men_Cannot_Del_User_Logon', 'Unable to delete logged users!'),
     ('Const_Men_Select_Profile', 'Please select the profile!'),
     ('Const_Err_Image_Too_Large', 'Image must be less than %s bytes')
@@ -806,6 +810,8 @@ const
     ('Const_Inc_StatusDisabled', 'Inativo'),
     ('Const_Inc_LabelImage', 'imagen'),
     ('Const_Cad_BtApplyFilter', 'Aplicar filtro'),
+    ('Const_Cad_BtRemoveFilter', 'Quitar filtro'),
+    ('Const_Cad_ShowInactive', 'Mostrar usuarios inactivos'),
     ('Const_Men_Cannot_Del_User_Logon', 'Imposible eliminar usuarios registrados!'),
     ('Const_Men_Select_Profile', 'Por favor seleccione el perfil!'),
     ('Const_Err_Image_Too_Large', 'Imagen debe ser menor que %s bytes')
@@ -1047,6 +1053,8 @@ const
     ('Const_Inc_StatusDisabled', 'Inativo'),
     ('Const_Inc_LabelImage', 'Photo'),
     ('Const_Cad_BtApplyFilter', 'Appliquer le filtre'),
+    ('Const_Cad_BtRemoveFilter', 'Retirer le filtre'),
+    ('Const_Cad_ShowInactive', 'Afficher les utilisateurs inactifs'),
     ('Const_Men_Cannot_Del_User_Logon', 'Imposible eliminar usuarios registrados!'),
     ('Const_Men_Select_Profile', 'Por favor seleccione el perfil!'),
     ('Const_Err_Image_Too_Large', 'Imagen debe ser menor que %s bytes')
