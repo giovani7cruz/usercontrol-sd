@@ -294,6 +294,7 @@ procedure TFrame_Profile.BtnExcPerClick(Sender: TObject);
 var
   TempID: Integer;
   CanDelete: Boolean;
+  HasUsers: Boolean;
   ErrorMsg: String;
   TempDS: TDataset;
 begin
@@ -305,11 +306,14 @@ begin
     fUserControl.TableUsers.TableName + ' Where ' +
     fUserControl.TableUsers.FieldTypeRec + ' = ' + QuotedStr('U') + ' AND ' +
     fUserControl.TableUsers.FieldProfile + ' = ' + IntToStr(TempID));
+  try
+    HasUsers := not TempDS.IsEmpty;
+  finally
+    TempDS.Free;
+  end;
 
-  if TempDS.FieldByName('IdUser').AsInteger > 0 then
+  if HasUsers then
   begin
-    TempDS.Close;
-    FreeAndNil(TempDS);
     // changed by fduenas: PromptDelete_WindowCaption
     if MessageBox(handle,
       PChar(Format(fUserControl.UserSettings.UsersProfile.PromptDelete,
@@ -317,11 +321,6 @@ begin
       PChar(fUserControl.UserSettings.UsersProfile.PromptDelete_WindowCaption),
       MB_ICONQUESTION or MB_YESNO or MB_DEFBUTTON2) <> idYes then
       Exit;
-  end
-  else
-  begin
-    TempDS.Close;
-    FreeAndNil(TempDS);
   end;
 
   CanDelete := True;

@@ -1113,28 +1113,33 @@ begin
 end;
 
 function TUserControl.GetAllUsers(Names: Boolean): TStringList;
-Var
-  FDataset: TDataSet;
+var
+  DataSet: TDataSet;
 begin
   Result := TStringList.Create;
-  if Names then
-    FDataset := DataConnector.UCGetSQLDataset
-      ('Select ' + TableUsers.FieldUserName + ' from ' + TableUsers.TableName +
-      ' Where ' + TableUsers.FieldTypeRec + ' = ' + QuotedStr('U') +
-      ' order by ' + TableUsers.FieldUserName)
-  else
-    FDataset := DataConnector.UCGetSQLDataset('Select ' + TableUsers.FieldLogin
-      + ' from ' + TableUsers.TableName + ' Where ' + TableUsers.FieldTypeRec +
-      ' = ' + QuotedStr('U') + ' order by ' + TableUsers.FieldUserName);
-  if FDataset.IsEmpty = False then
-  Begin
-    while FDataset.Eof = False do
-    begin
-      Result.Add(FDataset.Fields[0].AsString);
-      FDataset.Next;
+  try
+    if Names then
+      DataSet := DataConnector.UCGetSQLDataset
+        ('Select ' + TableUsers.FieldUserName + ' from ' + TableUsers.TableName +
+        ' Where ' + TableUsers.FieldTypeRec + ' = ' + QuotedStr('U') +
+        ' order by ' + TableUsers.FieldUserName)
+    else
+      DataSet := DataConnector.UCGetSQLDataset('Select ' + TableUsers.FieldLogin
+        + ' from ' + TableUsers.TableName + ' Where ' + TableUsers.FieldTypeRec +
+        ' = ' + QuotedStr('U') + ' order by ' + TableUsers.FieldUserName);
+    try
+      while not DataSet.Eof do
+      begin
+        Result.Add(DataSet.Fields[0].AsString);
+        DataSet.Next;
+      end;
+    finally
+      DataSet.Free;
     end;
-  End;
-  FDataset.Close;
+  except
+    Result.Free;
+    raise;
+  end;
 end;
 
 function TUserControl.GetLocalComputerName: String;
@@ -1604,6 +1609,7 @@ var
   Senha: String;
   Key: String;
   SQLstmt: String;
+  DataSet: TDataSet;
 begin
   case Self.Login.CharCasePass of
     ecNormal:
@@ -1618,24 +1624,24 @@ begin
     TableUsers.FieldPassword + ' as senha from ' + TableUsers.TableName + ' ' +
     'where ' + TableUsers.FieldUserID + ' = ' + IntToStr(IdUser);
 
-  with DataConnector.UCGetSQLDataset(SQLstmt) do
-  begin
-    Login := FieldByName('Login').AsString;
+  DataSet := DataConnector.UCGetSQLDataset(SQLstmt);
+  try
+    Login := DataSet.FieldByName('Login').AsString;
     case Self.Criptografia of
       cPadrao:
         begin
           Key := Encrypt(IntToStr(IdUser) + Login + NewPassword, EncryptKey);
-          Senha := Decrypt(FieldByName('Senha').AsString, EncryptKey);
+          Senha := Decrypt(DataSet.FieldByName('Senha').AsString, EncryptKey);
         end;
       cMD5:
         begin
           Key := MD5Sum(IntToStr(IdUser) + Login + MD5Sum(NewPassword));
-          Senha := FieldByName('Senha').AsString;
+          Senha := DataSet.FieldByName('Senha').AsString;
         end;
     end;
 
-    Close;
-    Free;
+  finally
+    DataSet.Free;
   end;
 
   case Self.Criptografia of
@@ -1671,27 +1677,28 @@ var
   Key: String;
   Password: String;
   SQLstmt: String;
+  DataSet: TDataSet;
 begin
   SQLstmt := 'SELECT ' + TableUsers.FieldPassword + ' AS SENHA FROM ' +
     TableUsers.TableName + ' WHERE ' + TableUsers.FieldUserID + ' = ' +
     IntToStr(IdUser);
 
-  with DataConnector.UCGetSQLDataset(SQLstmt) do
-  begin
+  DataSet := DataConnector.UCGetSQLDataset(SQLstmt);
+  try
     case Self.Criptografia of
       cPadrao:
         begin
-          Password := Decrypt(FieldByName('Senha').AsString, EncryptKey);
+          Password := Decrypt(DataSet.FieldByName('Senha').AsString, EncryptKey);
           Key := Encrypt(IntToStr(IdUser) + Login + Password, EncryptKey);
         end;
       cMD5:
         begin
-          Password := FieldByName('Senha').AsString;
+          Password := DataSet.FieldByName('Senha').AsString;
           Key := MD5Sum(IntToStr(IdUser) + Login + Password);
         end;
     end;
-    Close;
-    Free;
+  finally
+    DataSet.Free;
   end;
 
   SQLstmt :=
@@ -2538,8 +2545,7 @@ begin
           OnLoginError(Self, User, Password);
       end;
     finally
-      Close;
-      Free;
+      DataSet.Free;
     end;
 
 end;
@@ -2854,6 +2860,9 @@ begin
       PasswordInicial := LowerCase(Self.Login.InitialLogin.Password);
   end;
 
+  DataSetUsuario := nil;
+  DataSetPermissao := nil;
+
   SQLstmt := 'SELECT ' + TableUsers.FieldUserID + ' as idUser ' + 'FROM ' +
     TableUsers.TableName + ' ' + 'WHERE ' + TableUsers.FieldLogin + ' = ' +
     QuotedStr(UsuarioInicial);
@@ -2870,8 +2879,7 @@ begin
       IDUsuario := DataSetUsuario.FieldByName('idUser').AsInteger;
 
   finally
-    DataSetUsuario.Close;
-    FreeAndNil(DataSetUsuario);
+    DataSetUsuario.Free;
   end;
 
   SQLstmt := 'SELECT ' + TableRights.FieldUserID + ' AS IDUSER ' + 'FROM ' +
@@ -2886,8 +2894,7 @@ begin
       Exit;
 
   finally
-    DataSetPermissao.Close;
-    FreeAndNil(DataSetPermissao);
+    DataSetPermissao.Free;
   end;
 
   AddRight(IDUsuario, User.MenuItem);
@@ -3649,6 +3656,8 @@ end;
 { TUCAppMessage }
 
 procedure TUCApplicationMessage.CheckMessages;
+var
+  DataSet: TDataSet;
 
   function FmtDtHr(dt: String): String;
   begin
@@ -3660,7 +3669,7 @@ begin
   if not FReady then
     Exit;
 
-  with Self.UserControl.DataConnector.UCGetSQLDataset('SELECT UCM.IdMsg, ' +
+  DataSet := Self.UserControl.DataConnector.UCGetSQLDataset('SELECT UCM.IdMsg, ' +
     'UCC.' + Self.UserControl.TableUsers.FieldUserName + ' AS De, ' + 'UCC_1.' +
     Self.UserControl.TableUsers.FieldUserName + ' AS Para, ' + 'UCM.Subject, ' +
     'UCM.Msg, ' + 'UCM.DtSend, ' + 'UCM.DtReceive ' + 'FROM (' +
@@ -3670,24 +3679,24 @@ begin
     Self.UserControl.TableUsers.TableName + ' UCC_1 ON UCM.UsrTo = UCC_1.' +
     Self.UserControl.TableUsers.FieldUserID +
     ' where UCM.DtReceive is NULL and  UCM.UsrTo = ' +
-    IntToStr(Self.UserControl.CurrentUser.UserID)) do
-  begin
-    while not Eof do
+    IntToStr(Self.UserControl.CurrentUser.UserID));
+  try
+    while not DataSet.Eof do
     begin
       MsgRecForm := TMsgRecForm.Create(Self);
-      MsgRecForm.stDe.Caption := FieldByName('De').AsString;
-      MsgRecForm.stData.Caption := FmtDtHr(FieldByName('DtSend').AsString);
-      MsgRecForm.stAssunto.Caption := FieldByName('Subject').AsString;
-      MsgRecForm.MemoMsg.Text := FieldByName('msg').AsString;
+      MsgRecForm.stDe.Caption := DataSet.FieldByName('De').AsString;
+      MsgRecForm.stData.Caption := FmtDtHr(DataSet.FieldByName('DtSend').AsString);
+      MsgRecForm.stAssunto.Caption := DataSet.FieldByName('Subject').AsString;
+      MsgRecForm.MemoMsg.Text := DataSet.FieldByName('msg').AsString;
       if Assigned(Self.UserControl.DataConnector) then
         Self.UserControl.DataConnector.UCExecSQL('Update ' + Self.TableMessages
           + ' set DtReceive =  ' + QuotedStr(FormatDateTime('YYYYMMDDhhmm', now)
-          ) + ' Where  idMsg = ' + FieldByName('idMsg').AsString);
+          ) + ' Where  idMsg = ' + DataSet.FieldByName('idMsg').AsString);
       MsgRecForm.Show;
-      Next;
+      DataSet.Next;
     end;
-    Close;
-    Free;
+  finally
+    DataSet.Free;
   end;
 end;
 
@@ -3764,13 +3773,14 @@ procedure TUCApplicationMessage.SendAppMessage(ToUser: Integer;
   Subject, Msg: String);
 var
   UltId: Integer;
+  DataSet: TDataSet;
 begin
-  with UserControl.DataConnector.UCGetSQLDataset('Select Max(idMsg) as nr from '
-    + TableMessages) do
-  begin
-    UltId := FieldByName('nr').AsInteger + 1;
-    Close;
-    Free;
+  DataSet := UserControl.DataConnector.UCGetSQLDataset('Select Max(idMsg) as nr from '
+    + TableMessages);
+  try
+    UltId := DataSet.FieldByName('nr').AsInteger + 1;
+  finally
+    DataSet.Free;
   end;
   if Assigned(UserControl.DataConnector) then
     UserControl.DataConnector.UCExecSQL('Insert into ' + TableMessages +
@@ -4291,7 +4301,7 @@ begin
   if not Active then
     Exit;
 
-  if Assigned(FUserControl.DataConnector) = False then
+  if not Assigned(FUserControl) or not Assigned(FUserControl.DataConnector) then
     Exit;
 
   with FUserControl do
@@ -4316,7 +4326,7 @@ var
   FDataset: TDataSet;
 begin
   Result := False;
-  if Assigned(FUserControl.DataConnector) = False then
+  if not Assigned(FUserControl) or not Assigned(FUserControl.DataConnector) then
     Exit;
 
   with FUserControl do
@@ -4328,7 +4338,11 @@ begin
     if Assigned(DataConnector) then
     begin
       FDataset := DataConnector.UCGetSQLDataset(SQLstmt);
-      Result := not(FDataset.IsEmpty);
+      try
+        Result := not FDataset.IsEmpty;
+      finally
+        FDataset.Free;
+      end;
     end;
   end;
 end;

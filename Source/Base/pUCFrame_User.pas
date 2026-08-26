@@ -247,13 +247,18 @@ begin
       [
         FUsercontrol.TableUsersLogged.TableName,
         FUsercontrol.TableUsersLogged.FieldUserID,
-        IntToStr(FUsercontrol.CurrentUser.UserID)
+        IntToStr(TempID)
       ]
     ));
-    if not DataSetTemp.IsEmpty then
-    begin
-      MessageDlg(FUserControl.UserSettings.CommonMessages.CanNotDeleteUserLogon, mtWarning, [mbOK], 0);
-      Exit;
+    try
+      if not DataSetTemp.IsEmpty then
+      begin
+        MessageDlg(FUserControl.UserSettings.CommonMessages.CanNotDeleteUserLogon,
+          mtWarning, [mbOK], 0);
+        Exit;
+      end;
+    finally
+      DataSetTemp.Free;
     end;
 
     FUsercontrol.DataConnector.UCExecSQL

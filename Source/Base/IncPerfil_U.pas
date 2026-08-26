@@ -180,9 +180,11 @@ end;
 
 procedure TfrmIncluirPerfil.CopiaPerfil; { By Cleilson Sousa }
 var
-  IDPerfilVelho, I: Integer;
+  IDPerfilVelho: Integer;
   DSPermiss, DSPermissEX: TDataset;
 begin
+  DSPermiss := nil;
+  DSPermissEX := nil;
   PerfilDs.Filtered := False;
   PerfilDs.Filter := 'Upper(' + FUserControl.TableUsers.FieldUserName +
     ') like ' + AnsiUpperCase(QuotedStr(ComboBoxPerfil.Text));
@@ -190,52 +192,53 @@ begin
 
   if PerfilDs.RecordCount = 1 then
   begin
-    with FUserControl do
-    begin
-      IDPerfilVelho := PerfilDs.FieldByName(TableUsers.FieldUserID).AsInteger;
-
-      DSPermiss := DataConnector.UCGetSQLDataSet
-        ('SELECT * FROM ' + TableRights.TableName + ' WHERE ' +
-        TableRights.FieldUserID + ' = ' + IntToStr(IDPerfilVelho));
-
-      DSPermissEX := DataConnector.UCGetSQLDataSet
-        ('SELECT * FROM ' + TableRights.TableName + 'EX' + ' WHERE ' +
-        TableRights.FieldUserID + ' = ' + IntToStr(IDPerfilVelho));
-
-      with FUserControl.TableRights do
+    try
+      with FUserControl do
       begin
-        FUserControl.DataConnector.UCExecSQL('Delete from ' + TableName +
-          ' Where ' + FieldUserID + ' = ' + IntToStr(IDPerfilNovo) + ' and ' +
-          FieldModule + ' = ' + QuotedStr(FUserControl.ApplicationID));
-        FUserControl.DataConnector.UCExecSQL('Delete from ' + TableName +
-          'EX Where ' + FieldUserID + ' = ' + IntToStr(IDPerfilNovo) + ' and ' +
-          FieldModule + ' = ' + QuotedStr(FUserControl.ApplicationID));
-      end;
+        IDPerfilVelho := PerfilDs.FieldByName(TableUsers.FieldUserID).AsInteger;
 
-      // Salva os dados utilizando o IDPerfilNovo pra onde fiz a copia.
-      DSPermiss.First;
-      for I := 1 to DSPermiss.RecordCount do
-      begin
-        FUserControl.AddRight(IDPerfilNovo,
-          DSPermiss.FieldByName(TableRights.FieldComponentName).AsString);
-        DSPermiss.Next;
-      end;
+        DSPermiss := DataConnector.UCGetSQLDataSet
+          ('SELECT * FROM ' + TableRights.TableName + ' WHERE ' +
+          TableRights.FieldUserID + ' = ' + IntToStr(IDPerfilVelho));
 
-      DSPermissEX.First; // Extra Rights
-      for I := 1 to DSPermissEX.RecordCount do
-      begin
-        FUserControl.AddRightEX(IDPerfilNovo, ApplicationID,
-          DSPermissEX.FieldByName(TableRights.FieldFormName).AsString,
-          DSPermissEX.FieldByName(TableRights.FieldComponentName).AsString);
-        DSPermissEX.Next;
-      end;
+        DSPermissEX := DataConnector.UCGetSQLDataSet
+          ('SELECT * FROM ' + TableRights.TableName + 'EX' + ' WHERE ' +
+          TableRights.FieldUserID + ' = ' + IntToStr(IDPerfilVelho));
 
+        with TableRights do
+        begin
+          DataConnector.UCExecSQL('Delete from ' + TableName +
+            ' Where ' + FieldUserID + ' = ' + IntToStr(IDPerfilNovo) + ' and ' +
+            FieldModule + ' = ' + QuotedStr(ApplicationID));
+          DataConnector.UCExecSQL('Delete from ' + TableName +
+            'EX Where ' + FieldUserID + ' = ' + IntToStr(IDPerfilNovo) + ' and ' +
+            FieldModule + ' = ' + QuotedStr(ApplicationID));
+        end;
+
+        DSPermiss.First;
+        while not DSPermiss.Eof do
+        begin
+          AddRight(IDPerfilNovo,
+            DSPermiss.FieldByName(TableRights.FieldComponentName).AsString);
+          DSPermiss.Next;
+        end;
+
+        DSPermissEX.First;
+        while not DSPermissEX.Eof do
+        begin
+          AddRightEX(IDPerfilNovo, ApplicationID,
+            DSPermissEX.FieldByName(TableRights.FieldFormName).AsString,
+            DSPermissEX.FieldByName(TableRights.FieldComponentName).AsString);
+          DSPermissEX.Next;
+        end;
+      end;
+    finally
+      DSPermissEX.Free;
+      DSPermiss.Free;
     end;
   end
   else
-  begin
-    ShowMessage('Existe Perfis com nomes iguais');
-  end;
+    ShowMessage('Existem perfis com nomes iguais');
   Close;
 end;
 
@@ -286,9 +289,11 @@ begin
     TempDs := DataConnector.UCGetSQLDataSet('SELECT ' + TableUsers.FieldUserID +
       ' as MaxUserID from ' + TableUsers.TableName + ' ORDER BY ' +
       TableUsers.FieldUserID + ' DESC');
-  Result := TempDs.FieldByName('MaxUserID').AsInteger + 1;
-  TempDs.Close;
-  FreeAndNil(TempDs);
+  try
+    Result := TempDs.FieldByName('MaxUserID').AsInteger + 1;
+  finally
+    TempDs.Free;
+  end;
 end;
 
 procedure TfrmIncluirPerfil.IncluiPerfil;

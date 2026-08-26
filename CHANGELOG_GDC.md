@@ -65,6 +65,12 @@
 - Removida a criacao direta da classe abstrata `TDataSet` no editor de perfis;
   datasets opcionais de perfil agora sao verificados antes do acesso.
 - Substituidas as chamadas depreciadas de `TThread.Resume` por `Start`.
+- Corrigidos vazamentos de datasets nas consultas de usuarios, alteracao de
+  senha, mensagens, usuarios conectados e copia/exclusao de perfis.
+- A validacao anterior a exclusao agora consulta o usuario selecionado, em vez
+  do usuario que esta executando o cadastro.
+- Consultas temporarias passam a liberar seus datasets tambem quando ocorre
+  uma excecao durante leitura, descriptografia ou atualizacao da interface.
 
 ### Segurança
 
