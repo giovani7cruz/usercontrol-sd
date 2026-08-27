@@ -31,6 +31,14 @@ type
     procedure RefreshDataSet(DataSet: TDataSet);
   end;
 
+  { Optional extension for values that should not be embedded in SQL text,
+    such as Base64 images sent through REST/RPC transports. }
+  IUCDataConnectionTextFieldWriter = interface
+    ['{CFB52B39-8E4B-43E8-B88E-17F97F9FE07D}']
+    procedure UpdateTextField(const TableName, KeyField: string;
+      KeyValue: Int64; const FieldName, Value: string);
+  end;
+
   { Runtime adapter. It deliberately has no Register procedure, so installing a
     new design-time component is not necessary. }
   TUCConnectionAdapter = class(TUCDataConnector)
@@ -46,6 +54,8 @@ type
     function GetDBObjectName: String; override;
     function GetTransObjectName: String; override;
     procedure RefreshDataSet(DataSet: TDataSet); override;
+    function UCUpdateTextField(const TableName, KeyField: String;
+      KeyValue: Int64; const FieldName, Value: String): Boolean; override;
 
     property Connection: IUCDataConnection read FConnection write FConnection;
   end;
@@ -109,6 +119,18 @@ end;
 function TUCConnectionAdapter.GetTransObjectName: String;
 begin
   Result := RequireConnection.TransactionObjectName;
+end;
+
+function TUCConnectionAdapter.UCUpdateTextField(const TableName,
+  KeyField: String; KeyValue: Int64; const FieldName,
+  Value: String): Boolean;
+var
+  Writer: IUCDataConnectionTextFieldWriter;
+begin
+  Result := Supports(RequireConnection, IUCDataConnectionTextFieldWriter,
+    Writer);
+  if Result then
+    Writer.UpdateTextField(TableName, KeyField, KeyValue, FieldName, Value);
 end;
 
 end.

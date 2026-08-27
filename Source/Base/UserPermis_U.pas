@@ -141,6 +141,12 @@ type
 
   TTreeViewEvent = procedure(Marca: Boolean) of object;
 
+  TPermissionSearchResult = record
+    TreeView: TTreeView;
+    Node: TTreeNode;
+    Origin: String;
+  end;
+
   TUserPermis = class(TForm)
     Panel1: TPanel;
     LbDescricao: TLabel;
@@ -165,6 +171,11 @@ type
     pmTree: TPopupMenu;
     miExpandAll: TMenuItem;
     miCollapseAll: TMenuItem;
+    PanelSearch: TPanel;
+    lbSearch: TLabel;
+    edSearch: TEdit;
+    btSearchNext: TButton;
+    lbSearchResult: TLabel;
     procedure BtGravaClick(Sender: TObject);
     procedure TreeMenuClick(Sender: TObject);
     procedure BtCancelClick(Sender: TObject);
@@ -180,6 +191,10 @@ type
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure miCollapseAllClick(Sender: TObject);
     procedure miExpandAllClick(Sender: TObject);
+    procedure edSearchChange(Sender: TObject);
+    procedure edSearchKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure btSearchNextClick(Sender: TObject);
   private
     FMenu: TMenu;
     FActions: TObject;
@@ -192,6 +207,8 @@ type
     FListaAction: array of PTreeAction;
     FListaMenu: array of PTreeMenu;
     FListaControl: array of PTreeControl;
+    FSearchResults: array of TPermissionSearchResult;
+    FSearchIndex: Integer;
     {$IFNDEF FPC}
     { .$IFDEF UCACTMANAGER }
     FActionMainMenuBar: TActionMainMenuBar;
@@ -208,6 +225,14 @@ type
     function GetNode(TreeView: TTreeView): TTreeNode;
     procedure ClickTreeView(Sender: TObject; Event: TTreeViewEvent);
     function GetTreeViewActive: TTreeView;
+    function NormalizeSearchText(const Value: String): String;
+    function NodePath(Node: TTreeNode): String;
+    procedure AddSearchResult(TreeView: TTreeView; Node: TTreeNode;
+      const Origin, Query, Identifiers: String);
+    procedure BuildSearchResults;
+    procedure NavigateSearch(Delta: Integer);
+    procedure ShowSearchResult;
+    function SearchResultState(const SearchResult: TPermissionSearchResult): Integer;
   public
     FTempIdUser: Integer;
     FUserControl: TUserControl;
@@ -615,7 +640,10 @@ begin
   begin
     Node := GetNode(TTreeView(Sender));
     if ((Node <> nil) and (Node = TTreeView(Sender).Selected)) then
+    begin
       Event(True);
+      ShowSearchResult;
+    end;
   end;
 end;
 
@@ -714,7 +742,7 @@ begin
     TreeControls.Selected.ImageIndex := PTreeControl(TreeControls.Selected.Data)
       .Selecionado;
     TreeControls.Selected.SelectedIndex :=
-      PTreeAction(TreeControls.Selected.Data).Selecionado;
+      PTreeControl(TreeControls.Selected.Data).Selecionado;
   end;
   TreeControls.Repaint;
 end;
@@ -781,6 +809,7 @@ begin
         end;
     TreeControls.Repaint;
   end;
+  ShowSearchResult;
 end;
 
 procedure TUserPermis.BtBloqueiaClick(Sender: TObject);
@@ -911,8 +940,199 @@ begin
   TreeMenu.Repaint;
   FChangingTree := False;
   PC.ActivePageIndex := 1;
-  PageAction.Caption := 'Menu Controle de Usuários';
-  PageMenu.Caption := 'Menu Controle de Usuários';
+  FSearchIndex := -1;
+  SetLength(FSearchResults, 0);
+  edSearch.Clear;
+  lbSearchResult.Caption := '';
+end;
+
+function TUserPermis.NormalizeSearchText(const Value: String): String;
+var
+  I: Integer;
+begin
+  Result := UpperCase(StringReplace(Value, '&', '', [rfReplaceAll]));
+  for I := 1 to Length(Result) do
+    case Result[I] of
+      'Á', 'À', 'Â', 'Ã', 'Ä': Result[I] := 'A';
+      'É', 'È', 'Ê', 'Ë': Result[I] := 'E';
+      'Í', 'Ì', 'Î', 'Ï': Result[I] := 'I';
+      'Ó', 'Ò', 'Ô', 'Õ', 'Ö': Result[I] := 'O';
+      'Ú', 'Ù', 'Û', 'Ü': Result[I] := 'U';
+      'Ç': Result[I] := 'C';
+      'Ñ': Result[I] := 'N';
+    end;
+end;
+
+function TUserPermis.NodePath(Node: TTreeNode): String;
+begin
+  Result := '';
+  while Assigned(Node) do
+  begin
+    if Result = '' then
+      Result := Node.Text
+    else
+      Result := Node.Text + ' > ' + Result;
+    Node := Node.Parent;
+  end;
+end;
+
+procedure TUserPermis.AddSearchResult(TreeView: TTreeView; Node: TTreeNode;
+  const Origin, Query, Identifiers: String);
+var
+  Index: Integer;
+  SearchableText: String;
+begin
+  SearchableText := NormalizeSearchText(NodePath(Node) + ' ' + Identifiers);
+  if Pos(Query, SearchableText) = 0 then
+    Exit;
+
+  Index := Length(FSearchResults);
+  SetLength(FSearchResults, Index + 1);
+  FSearchResults[Index].TreeView := TreeView;
+  FSearchResults[Index].Node := Node;
+  FSearchResults[Index].Origin := Origin;
+end;
+
+procedure TUserPermis.BuildSearchResults;
+var
+  I: Integer;
+  Query: String;
+  Node: TTreeNode;
+begin
+  SetLength(FSearchResults, 0);
+  FSearchIndex := -1;
+  Query := NormalizeSearchText(Trim(edSearch.Text));
+
+  if Query = '' then
+  begin
+    lbSearchResult.Caption := '';
+    Exit;
+  end;
+
+  for I := 0 to TreeMenu.Items.Count - 1 do
+  begin
+    Node := TreeMenu.Items[I];
+    AddSearchResult(TreeMenu, Node, PageMenu.Caption, Query,
+      PTreeMenu(Node.Data).MenuName);
+  end;
+
+  for I := 0 to TreeAction.Items.Count - 1 do
+  begin
+    Node := TreeAction.Items[I];
+    if not PTreeAction(Node.Data).Grupo then
+      AddSearchResult(TreeAction, Node, PageAction.Caption, Query,
+        PTreeAction(Node.Data).MenuName);
+  end;
+
+  for I := 0 to TreeControls.Items.Count - 1 do
+  begin
+    Node := TreeControls.Items[I];
+    if not PTreeControl(Node.Data).Grupo then
+      AddSearchResult(TreeControls, Node, PageControls.Caption, Query,
+        PTreeControl(Node.Data).FormName + ' ' +
+        PTreeControl(Node.Data).CompName);
+  end;
+
+  if Length(FSearchResults) = 0 then
+    lbSearchResult.Caption := FUserControl.UserSettings.Rights.SearchNoResults
+  else
+    NavigateSearch(1);
+end;
+
+function TUserPermis.SearchResultState(
+  const SearchResult: TPermissionSearchResult): Integer;
+begin
+  if SearchResult.TreeView = TreeMenu then
+    Result := PTreeMenu(SearchResult.Node.Data).Selecionado
+  else if SearchResult.TreeView = TreeAction then
+    Result := PTreeAction(SearchResult.Node.Data).Selecionado
+  else
+    Result := PTreeControl(SearchResult.Node.Data).Selecionado;
+end;
+
+procedure TUserPermis.ShowSearchResult;
+var
+  StateText: String;
+begin
+  if (FSearchIndex < 0) or (FSearchIndex >= Length(FSearchResults)) then
+    Exit;
+
+  case SearchResultState(FSearchResults[FSearchIndex]) of
+    0: StateText := CBBloqueado.Caption;
+    1: StateText := CBLiberado.Caption;
+  else
+    StateText := FUserControl.UserSettings.Rights.SearchInherited;
+  end;
+
+  lbSearchResult.Caption := Format('%d/%d - %s > %s [%s]',
+    [FSearchIndex + 1, Length(FSearchResults),
+    FSearchResults[FSearchIndex].Origin,
+    NodePath(FSearchResults[FSearchIndex].Node), StateText]);
+end;
+
+procedure TUserPermis.NavigateSearch(Delta: Integer);
+var
+  ParentNode: TTreeNode;
+  SearchResult: TPermissionSearchResult;
+begin
+  if Length(FSearchResults) = 0 then
+    Exit;
+
+  FSearchIndex := (FSearchIndex + Delta) mod Length(FSearchResults);
+  if FSearchIndex < 0 then
+    FSearchIndex := Length(FSearchResults) - 1;
+
+  SearchResult := FSearchResults[FSearchIndex];
+  if SearchResult.TreeView = TreeMenu then
+    PC.ActivePage := PageMenu
+  else if SearchResult.TreeView = TreeAction then
+    PC.ActivePage := PageAction
+  else
+    PC.ActivePage := PageControls;
+
+  ParentNode := SearchResult.Node.Parent;
+  while Assigned(ParentNode) do
+  begin
+    ParentNode.Expand(False);
+    ParentNode := ParentNode.Parent;
+  end;
+
+  FChangingTree := True;
+  try
+    SearchResult.TreeView.Selected := SearchResult.Node;
+    SearchResult.Node.MakeVisible;
+  finally
+    FChangingTree := False;
+  end;
+  ShowSearchResult;
+end;
+
+procedure TUserPermis.edSearchChange(Sender: TObject);
+begin
+  BuildSearchResults;
+end;
+
+procedure TUserPermis.edSearchKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if (Key = VK_RETURN) or (Key = VK_F3) then
+  begin
+    if ssShift in Shift then
+      NavigateSearch(-1)
+    else
+      NavigateSearch(1);
+    Key := 0;
+  end
+  else if Key = VK_ESCAPE then
+  begin
+    edSearch.Clear;
+    Key := 0;
+  end;
+end;
+
+procedure TUserPermis.btSearchNextClick(Sender: TObject);
+begin
+  NavigateSearch(1);
 end;
 
 function TUserPermis.GetNode(TreeView: TTreeView): TTreeNode;

@@ -2,7 +2,7 @@ object UserPermis: TUserPermis
   Left = 255
   Top = 154
   Width = 597
-  Height = 560
+  Height = 608
   Caption = 'Seguran'#231'a'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -163,14 +163,58 @@ object UserPermis: TUserPermis
       ParentFont = False
     end
   end
+  object PanelSearch: TPanel
+    Left = 0
+    Top = 35
+    Width = 589
+    Height = 48
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 1
+    object lbSearch: TLabel
+      Left = 8
+      Top = 9
+      Width = 50
+      Height = 13
+      Caption = 'Localizar:'
+    end
+    object lbSearchResult: TLabel
+      Left = 72
+      Top = 29
+      Width = 509
+      Height = 13
+      AutoSize = False
+      Anchors = [akLeft, akTop, akRight]
+    end
+    object edSearch: TEdit
+      Left = 72
+      Top = 5
+      Width = 410
+      Height = 21
+      Anchors = [akLeft, akTop, akRight]
+      TabOrder = 0
+      OnChange = edSearchChange
+      OnKeyDown = edSearchKeyDown
+    end
+    object btSearchNext: TButton
+      Left = 490
+      Top = 4
+      Width = 91
+      Height = 23
+      Anchors = [akTop, akRight]
+      Caption = 'Pr'#243'ximo'
+      TabOrder = 1
+      OnClick = btSearchNextClick
+    end
+  end
   object Panel3: TPanel
     Left = 488
-    Top = 35
+    Top = 83
     Width = 101
     Height = 491
     Align = alRight
     BevelOuter = bvNone
-    TabOrder = 1
+    TabOrder = 2
     object BtLibera: TBitBtn
       Left = 8
       Top = 24
@@ -422,7 +466,7 @@ object UserPermis: TUserPermis
   end
   object PC: TPageControl
     Left = 0
-    Top = 35
+    Top = 83
     Width = 488
     Height = 491
     ActivePage = PageMenu
@@ -434,7 +478,7 @@ object UserPermis: TUserPermis
     Font.Style = []
     MultiLine = True
     ParentFont = False
-    TabOrder = 2
+    TabOrder = 3
     TabWidth = 155
     object PageMenu: TTabSheet
       Caption = 'Menu Controle de Usuarios'

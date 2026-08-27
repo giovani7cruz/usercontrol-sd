@@ -83,6 +83,7 @@ uses
   DB,
   DBCtrls,
   Dialogs,
+  ExtDlgs,
   ExtCtrls,
   Forms,
   Graphics,
@@ -97,6 +98,7 @@ uses
   {$ENDIF}
   {$IFNDEF FPC}
   AxCtrls,
+  Vcl.Imaging.jpeg,
   {$ENDIF}
   Menus,
 
@@ -136,6 +138,8 @@ type
     pmImage: TPopupMenu;
     miLoad: TMenuItem;
     miClear: TMenuItem;
+    btLoadImage: TBitBtn;
+    btClearImage: TBitBtn;
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
     procedure btCancelaClick(Sender: TObject);
     procedure btGravarClick(Sender: TObject);
@@ -148,6 +152,8 @@ type
     procedure miClearClick(Sender: TObject);
   private
     FormSenha: TCustomForm;
+    FImageChanged: Boolean;
+    procedure UpdateImageActions;
     
 	{$IFDEF DELPHI2006_UP}
 	function ImageToBase64(Graphic: TGraphic): string;
@@ -194,6 +200,8 @@ procedure TfrmIncluirUsuario.FormCreate(Sender: TObject);
 begin
   Self.BorderIcons := [];
   Self.BorderStyle := bsDialog;
+  FImageChanged := False;
+  UpdateImageActions;
 end;
 
 {$IFDEF DELPHI2006_UP}
@@ -203,24 +211,26 @@ var
   ms: TMemoryStream; 
 begin
   Result := nil;
-  
   if Base64 = '' then
-    Result := nil
-  else
-  begin
-    bs := Base64ToStream(Base64);
+    Exit;
+
+  bs := Base64ToStream(Base64);
+  try
+    bs.Position := 0;
+    ms := UnpackStream(bs);
     try
-      bs.Position := 0;
-      ms := UnpackStream(bs);
+      Result := TOleGraphic.Create;
       try
-        Result := TOleGraphic.Create;
         Result.LoadFromStream(ms);
-      finally
-        ms.Free;
+      except
+        FreeAndNil(Result);
+        raise;
       end;
     finally
-      bs.Free;
+      ms.Free;
     end;
+  finally
+    bs.Free;
   end;
 end;
 {$ENDIF}
@@ -258,6 +268,7 @@ var
   vUserExpired: Integer;
   vPerfil: Integer;
   vPrivilegiado: Boolean;
+  vImage: String;
 
   procedure SendEmail;
   var
@@ -305,12 +316,21 @@ begin
 
       if FAltera then
       begin // alterar user
+        if FImageChanged then
+          {$IFDEF DELPHI2006_UP}
+          vImage := ImageToBase64(iUserImage.Picture.Graphic)
+          {$ELSE}
+          vImage := ''
+          {$ENDIF}
+        else
+          vImage := '';
+
         FUserControl.ChangeUser(vNovoIDUsuario, vLogin, vNome, vEmail, vPerfil, vUserExpired, SpinExpira.Value,
           ComboStatus.ItemIndex, vPrivilegiado, 
 		  {$IFDEF DELPHI2006_UP}
-		  ImageToBase64(iUserImage.Picture.Graphic)
+		  vImage, FImageChanged
 		  {$ELSE}
-		  ''
+		  '', False
 		  {$ENDIF}
 		  
 		  );
@@ -374,12 +394,11 @@ end;
 {$IFDEF DELPHI2006_UP}
 function TfrmIncluirUsuario.GetImagePath: string;
 var
-  FOpenDialog: TOpenDialog;
+  FOpenDialog: TOpenPictureDialog;
 begin
   Result := '';
-  FOpenDialog := TOpenDialog.Create(nil);
+  FOpenDialog := TOpenPictureDialog.Create(nil);
   try
-    FOpenDialog.Filter := 'All|*.jpg; *.jpeg; *.gif; *.png|JPG|*.jpg; *.jpeg|GIF|*.gif';
     FOpenDialog.Options := [ofHideReadOnly,ofPathMustExist,ofFileMustExist,ofEnableSizing];
     if FOpenDialog.Execute then
       Result := FOpenDialog.FileName;
@@ -417,6 +436,9 @@ begin
   Result := '';
   if Graphic <> nil then
   begin
+    if Graphic.Empty then
+      Exit;
+
     ms := TMemoryStream.Create;
     try
       Graphic.SaveToStream(ms);
@@ -437,6 +459,8 @@ end;
 procedure TfrmIncluirUsuario.miClearClick(Sender: TObject);
 begin
   iUserImage.Picture := nil;
+  FImageChanged := True;
+  UpdateImageActions;
 end;
 
 procedure TfrmIncluirUsuario.miLoadClick(Sender: TObject);
@@ -444,9 +468,13 @@ procedure TfrmIncluirUsuario.miLoadClick(Sender: TObject);
 var
   ms: TMemoryStream;
   og: TOleGraphic;
+  Bitmap: Graphics.TBitmap;
+  JpegImage: TJPEGImage;
   FilePath: string;
+  NewWidth: Integer;
+  NewHeight: Integer;
 
-  function GetSize: Real;
+  function GetSize: Int64;
   var
     SearchRec: TSearchRec;
   begin
@@ -459,7 +487,8 @@ var
     end;
   end;
 const
-  ImageMaxSize = 8100;
+  MaxSourceImageSize = 5 * 1024 * 1024;
+  MaxImageDimension = 256;
 begin
   {$IFDEF DELPHI2006_UP}
   FilePath := GetImagePath;
@@ -468,8 +497,10 @@ begin
   {$ENDIF}
   if Length(Trim(FilePath)) > 0 then
   begin
-    if GetSize > ImageMaxSize then
-      raise Exception.Create(Format(FUserControl.UserSettings.CommonMessages.ImageTooLarge, [IntToStr(ImageMaxSize)]));
+    if GetSize > MaxSourceImageSize then
+      raise Exception.Create(Format(
+        FUserControl.UserSettings.CommonMessages.ImageTooLarge,
+        [IntToStr(MaxSourceImageSize)]));
 
     ms := TMemoryStream.Create;
     try
@@ -478,7 +509,55 @@ begin
         ms.LoadFromFile(FilePath);
         ms.Position := 0;
         og.LoadFromStream(ms);
-        iUserImage.Picture.Assign(og);
+
+        if (og.Width <= 0) or (og.Height <= 0) then
+          raise Exception.Create('Imagem inválida');
+
+        if (og.Width <= MaxImageDimension) and
+          (og.Height <= MaxImageDimension) then
+        begin
+          NewWidth := og.Width;
+          NewHeight := og.Height;
+        end
+        else if og.Width >= og.Height then
+        begin
+          NewWidth := MaxImageDimension;
+          NewHeight := Integer((Int64(og.Height) * NewWidth) div og.Width);
+        end
+        else
+        begin
+          NewHeight := MaxImageDimension;
+          NewWidth := Integer((Int64(og.Width) * NewHeight) div og.Height);
+        end;
+
+        if NewWidth < 1 then
+          NewWidth := 1;
+        if NewHeight < 1 then
+          NewHeight := 1;
+
+        Bitmap := Graphics.TBitmap.Create;
+        try
+          Bitmap.PixelFormat := pf24bit;
+          Bitmap.SetSize(NewWidth, NewHeight);
+          Bitmap.Canvas.Brush.Color := clWhite;
+          Bitmap.Canvas.FillRect(Rect(0, 0, NewWidth, NewHeight));
+          Bitmap.Canvas.StretchDraw(Rect(0, 0, NewWidth, NewHeight), og);
+
+          JpegImage := TJPEGImage.Create;
+          try
+            JpegImage.Assign(Bitmap);
+            JpegImage.CompressionQuality := 85;
+            JpegImage.Compress;
+            iUserImage.Picture.Assign(JpegImage);
+          finally
+            JpegImage.Free;
+          end;
+        finally
+          Bitmap.Free;
+        end;
+
+        FImageChanged := True;
+        UpdateImageActions;
       finally
         og.Free;
       end;
@@ -496,14 +575,32 @@ procedure TfrmIncluirUsuario.SetImage(Image: string);
 var
   og: TOleGraphic;
 begin
-  og := Base64ToImage(Image);
-  try
-    iUserImage.Picture.Assign(og);
-  finally
-    og.Free;
+  if Image = '' then
+    iUserImage.Picture := nil
+  else
+  begin
+    og := Base64ToImage(Image);
+    try
+      iUserImage.Picture.Assign(og);
+    finally
+      og.Free;
+    end;
   end;
+  FImageChanged := False;
+  UpdateImageActions;
 end;
 {$ENDIF}
+
+procedure TfrmIncluirUsuario.UpdateImageActions;
+var
+  HasImage: Boolean;
+begin
+  HasImage := Assigned(iUserImage.Picture.Graphic);
+  if HasImage then
+    HasImage := not iUserImage.Picture.Graphic.Empty;
+  btClearImage.Enabled := HasImage;
+  miClear.Enabled := HasImage;
+end;
 
 {$IFDEF DELPHI2006_UP}
 function TfrmIncluirUsuario.StreamToBase64(Value: TMemoryStream): string;

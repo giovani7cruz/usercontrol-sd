@@ -79,6 +79,15 @@
   horario local e removeu um `JOIN` de perfil que nao era utilizado.
 - A lista de usuarios agora oculta inativos por padrao e oferece uma opcao para
   exibi-los, combinavel com os filtros de nome, login e e-mail.
+- A tela de logs agora exibe a mensagem completa da linha selecionada em um
+  painel redimensionavel e permite copiar o conteudo para a area de transferencia.
+- Imagens de usuarios deixam de ser incorporadas ao SQL principal quando a
+  conexao oferece uma operacao separada de gravacao de campo textual; o adapter
+  do Aguia usa dataset e POST.
+- O cadastro passa a exibir botoes para carregar e remover a imagem, envia a foto
+  apenas quando alterada e normaliza novas imagens para JPEG de ate 256 pixels.
+- A edicao de permissoes ganhou uma busca global por descricao e identificadores
+  internos, cobrindo menus, acoes e permissoes estendidas sem alterar marcacoes.
 
 ### Segurança
 

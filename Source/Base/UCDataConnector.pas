@@ -102,6 +102,8 @@ type
     procedure CloseDataSet(DataSet : TDataSet); virtual;
     procedure OpenDataSet(DataSet : TDataSet); virtual;
     procedure RefreshDataSet(DataSet: TDataSet); virtual;
+    function UCUpdateTextField(const TableName, KeyField: String;
+      KeyValue: Int64; const FieldName, Value: String): Boolean; virtual;
   end;
 
 implementation
@@ -132,6 +134,12 @@ begin
   ValidateDataSet(DataSet, 'OrderBy');
   if Trim(FieldName) = '' then
     raise Exception.Create('OrderBy: nome do campo nao informado');
+end;
+
+function TUCDataConnector.UCUpdateTextField(const TableName, KeyField: String;
+  KeyValue: Int64; const FieldName, Value: String): Boolean;
+begin
+  Result := False;
 end;
 
 procedure TUCDataConnector.ValidateDataSet(DataSet: TDataSet;

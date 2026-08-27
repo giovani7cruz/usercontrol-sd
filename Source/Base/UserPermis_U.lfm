@@ -1,10 +1,10 @@
 object UserPermis: TUserPermis
   Left = 342
-  Height = 560
+  Height = 608
   Top = 87
   Width = 640
   Caption = 'Segurança'
-  ClientHeight = 560
+  ClientHeight = 608
   ClientWidth = 640
   Color = clBtnFace
   Font.Color = clWindowText
@@ -167,16 +167,68 @@ object UserPermis: TUserPermis
       ParentFont = False
     end
   end
+  object PanelSearch: TPanel
+    Left = 0
+    Height = 48
+    Top = 35
+    Width = 640
+    Align = alTop
+    BevelOuter = bvNone
+    ClientHeight = 48
+    ClientWidth = 640
+    TabOrder = 1
+    object lbSearch: TLabel
+      Left = 8
+      Height = 13
+      Top = 9
+      Width = 50
+      Caption = 'Localizar:'
+      ParentColor = False
+    end
+    object lbSearchResult: TLabel
+      Left = 72
+      Height = 13
+      Top = 29
+      Width = 560
+      Anchors = [akTop, akLeft, akRight]
+      AutoSize = False
+      ParentColor = False
+    end
+    object edSearch: TEdit
+      AnchorSideRight.Control = PanelSearch
+      AnchorSideRight.Side = asrBottom
+      Left = 72
+      Height = 23
+      Top = 4
+      Width = 451
+      Anchors = [akTop, akLeft, akRight]
+      TabOrder = 0
+      OnChange = edSearchChange
+      OnKeyDown = edSearchKeyDown
+    end
+    object btSearchNext: TButton
+      AnchorSideRight.Control = PanelSearch
+      AnchorSideRight.Side = asrBottom
+      Left = 531
+      Height = 25
+      Top = 3
+      Width = 101
+      Anchors = [akTop, akRight]
+      Caption = 'Próximo'
+      TabOrder = 1
+      OnClick = btSearchNextClick
+    end
+  end
   object Panel3: TPanel
     Left = 531
     Height = 525
-    Top = 35
+    Top = 83
     Width = 109
     Align = alRight
     BevelOuter = bvNone
     ClientHeight = 525
     ClientWidth = 109
-    TabOrder = 1
+    TabOrder = 2
     object BtLibera: TBitBtn
       Left = 8
       Height = 25
@@ -435,7 +487,7 @@ object UserPermis: TUserPermis
   object PC: TPageControl
     Left = 0
     Height = 525
-    Top = 35
+    Top = 83
     Width = 531
     ActivePage = PageMenu
     Align = alClient
@@ -445,7 +497,7 @@ object UserPermis: TUserPermis
     MultiLine = True
     ParentFont = False
     TabIndex = 0
-    TabOrder = 2
+    TabOrder = 3
     TabWidth = 155
     Options = [nboMultiLine]
     object PageMenu: TTabSheet

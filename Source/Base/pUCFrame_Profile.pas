@@ -216,6 +216,8 @@ begin
     UserPermis.PageMenu.Caption := PageMenu;
     UserPermis.PageAction.Caption := PageActions;
     UserPermis.PageControls.Caption := PageControls; // By Vicente Barros Leonel
+    UserPermis.lbSearch.Caption := SearchLabel;
+    UserPermis.btSearchNext.Caption := SearchNext;
     UserPermis.BtLibera.Caption := BtUnlock;
     UserPermis.BtBloqueia.Caption := BtLock;
     UserPermis.BtGrava.Caption := BtSave;

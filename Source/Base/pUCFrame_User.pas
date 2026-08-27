@@ -602,6 +602,10 @@ begin
     end;
     FfrmIncluirUsuario.ComboStatus.ItemIndex := 0;
     FfrmIncluirUsuario.lImagem.Caption := LabelImage;
+    FfrmIncluirUsuario.btLoadImage.Caption := BtLoadImage;
+    FfrmIncluirUsuario.btClearImage.Caption := BtRemoveImage;
+    FfrmIncluirUsuario.miLoad.Caption := BtLoadImage;
+    FfrmIncluirUsuario.miClear.Caption := BtRemoveImage;
   end;
 end;
 

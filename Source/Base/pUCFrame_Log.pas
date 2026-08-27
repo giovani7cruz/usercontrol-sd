@@ -80,6 +80,7 @@ uses
   Variants,
   Buttons,
   Classes,
+  Clipbrd,
   Controls,
   DB,
   DBCtrls,
@@ -126,6 +127,11 @@ type
     ComboNivel: TComboBox;
     Label1: TLabel;
     Mensagem: TEdit;
+    PanelLogDetail: TPanel;
+    lbLogDetail: TLabel;
+    DBMemoLogDetail: TDBMemo;
+    btCopyLog: TBitBtn;
+    SplitterLogDetail: TSplitter;
     procedure ComboNivelDrawItem(Control: TWinControl; Index: Integer;
       Rect: TRect; State: TOwnerDrawState);
     procedure DBGrid1DrawColumnCell(Sender: TObject; const Rect: TRect;
@@ -133,8 +139,11 @@ type
     procedure btexcluiClick(Sender: TObject);
     procedure btfiltroClick(Sender: TObject);
     procedure DBGrid1TitleClick(Column: TColumn);
+    procedure btCopyLogClick(Sender: TObject);
+    procedure DataSource1DataChange(Sender: TObject; Field: TField);
   private
     procedure AplicaFiltro;
+    procedure UpdateLogDetailState;
   public
     ListIdUser: TStringList;
     DSLog, DSCmd: TDataset;
@@ -156,10 +165,27 @@ uses
 
 destructor TUCFrame_Log.Destroy;
 begin
+  DataSource1.DataSet := nil;
   FreeAndnil(DSLog);
   FreeAndnil(DSCmd);
   FreeAndnil(ListIdUser);
   inherited;
+end;
+
+procedure TUCFrame_Log.btCopyLogClick(Sender: TObject);
+var
+  MessageField: TField;
+begin
+  if not Assigned(DataSource1.DataSet) then
+    Exit;
+  if not DataSource1.DataSet.Active then
+    Exit;
+  if DataSource1.DataSet.IsEmpty then
+    Exit;
+
+  MessageField := DataSource1.DataSet.FindField('MSG');
+  if Assigned(MessageField) then
+    Clipboard.AsText := MessageField.AsString;
 end;
 
 procedure TUCFrame_Log.ComboNivelDrawItem(Control: TWinControl; Index: Integer;
@@ -221,6 +247,11 @@ end;
 procedure TUCFrame_Log.DBGrid1TitleClick(Column: TColumn);
 begin
   FUsercontrol.DataConnector.OrderBy(Column.Field.DataSet, Column.FieldName);
+end;
+
+procedure TUCFrame_Log.DataSource1DataChange(Sender: TObject; Field: TField);
+begin
+  UpdateLogDetailState;
 end;
 
 procedure TUCFrame_Log.btexcluiClick(Sender: TObject);
@@ -297,6 +328,23 @@ begin
   DSLog := FUsercontrol.DataConnector.UCGetSQLDataset(Temp);
   DataSource1.DataSet := DSLog;
   btexclui.Enabled := not DSLog.IsEmpty;
+  UpdateLogDetailState;
+end;
+
+procedure TUCFrame_Log.UpdateLogDetailState;
+var
+  DataSet: TDataSet;
+begin
+  DataSet := DataSource1.DataSet;
+  btCopyLog.Enabled := False;
+  if not Assigned(DataSet) then
+    Exit;
+  if not DataSet.Active then
+    Exit;
+  if DataSet.IsEmpty then
+    Exit;
+
+  btCopyLog.Enabled := Assigned(DataSet.FindField('MSG'));
 end;
 
 procedure TUCFrame_Log.SetWindow;
@@ -369,6 +417,7 @@ begin
   end;
   DataSource1.DataSet := DSLog;
   btexclui.Enabled := not DSLog.IsEmpty;
+  UpdateLogDetailState;
 
   with FUsercontrol.UserSettings.Log, DBGrid1 do
   begin
@@ -377,6 +426,8 @@ begin
     lbNivel.Caption := LabelLevel;
     btfiltro.Caption := BtFilter;
     btexclui.Caption := BtDelete;
+    lbLogDetail.Caption := LabelDetail;
+    btCopyLog.Caption := BtCopy;
 
     { Columns[0].Title.Caption := ColAppID;
       Columns[0].FieldName     := 'APPLICATIONID';

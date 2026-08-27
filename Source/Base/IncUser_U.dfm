@@ -461,7 +461,7 @@ object frmIncluirUsuario: TfrmIncluirUsuario
       Left = 8
       Top = 151
       Width = 107
-      Height = 117
+      Height = 82
       BevelInner = bvSpace
       BevelOuter = bvLowered
       TabOrder = 8
@@ -469,12 +469,31 @@ object frmIncluirUsuario: TfrmIncluirUsuario
         Left = 0
         Top = 0
         Width = 100
-        Height = 110
+        Height = 75
         Center = True
         PopupMenu = pmImage
         Stretch = True
         Transparent = True
+        OnDblClick = miLoadClick
       end
+    end
+    object btLoadImage: TBitBtn
+      Left = 8
+      Top = 239
+      Width = 107
+      Height = 25
+      Caption = 'Carregar'
+      TabOrder = 9
+      OnClick = miLoadClick
+    end
+    object btClearImage: TBitBtn
+      Left = 8
+      Top = 269
+      Width = 107
+      Height = 25
+      Caption = 'Remover'
+      TabOrder = 10
+      OnClick = miClearClick
     end
   end
   object pmImage: TPopupMenu

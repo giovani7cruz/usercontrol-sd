@@ -484,6 +484,7 @@ type
     procedure SetfLanguage(const Value: TUCLanguage);
     procedure SetFMailUserControl(const Value: TMailUserControl);
     procedure ActionEsqueceuSenha(Sender: TObject);
+    procedure SaveUserImage(IdUser: Integer; const Image: String);
   protected
     FRetry: Integer;
     // Formulários
@@ -534,7 +535,7 @@ type
     procedure StartLogin;
     procedure ShowChangePassword;
     procedure ChangeUser(IdUser: Integer; Login, Name, Mail: String; Profile, UserExpired, UserDaysSun, Status: Integer;
-      Privuser: Boolean; const Image: string);
+      Privuser: Boolean; const Image: string; ImageChanged: Boolean = True);
     procedure ChangePassword(IdUser: Integer; NewPassword: String);
     procedure AddRight(IdUser: Integer; ItemRight: TObject; FullPath: Boolean = True); overload;
     procedure AddRight(IdUser: Integer; ItemRight: String); overload;
@@ -1603,25 +1604,28 @@ begin
     '  %s, %s, %s, %s, ' +
     '  %s, %s, %s, %s, ' +
     '  %s, %s, %s, %s, ' +
-    '  %s, %s ' +
+    '  %s ' +
     ') values (' +
     '  %d, %s, %s, %s, %s, %s, %d, ' +
     '  %s, %s, %s, ' +
-    '  %d, %d, %s, %s' +
+    '  %d, %d, %s' +
     ');',
     [
       TableUsers.TableName,
       TableUsers.FieldUserID, TableUsers.FieldUserName, TableUsers.FieldLogin, TableUsers.FieldPassword,
       TableUsers.FieldEmail, TableUsers.FieldPrivileged, TableUsers.FieldProfile, TableUsers.FieldTypeRec,
       TableUsers.FieldKey, TableUsers.FieldDateExpired, TableUsers.FieldUserExpired, TableUsers.FieldUserDaysSun,
-      TableUsers.FieldUserInative, TableUsers.FieldImage,
+      TableUsers.FieldUserInative,
       Result, QuotedStr(Name), QuotedStr(Login), QuotedStr(Senha), QuotedStr(Mail), BoolToStr(Privuser), Profile,
       QuotedStr('U'), QuotedStr(Key), QuotedStr(FormatDateTime('dd/mm/yyyy', Date + FLogin.fDaysOfSunExpired)),
-      UserExpired, DaysExpired, '0', QuotedStr(StringReplace(Image, '''', '''''''', [rfReplaceAll]))
+      UserExpired, DaysExpired, '0'
     ]
   );
   if Assigned(DataConnector) then
     DataConnector.UCExecSQL(SQLstmt);
+
+  if Image <> '' then
+    SaveUserImage(Result, Image);
 
   if Assigned(OnAddUser) then
     OnAddUser(Self, Login, Password, Name, Mail, Profile, Privuser);
@@ -1695,8 +1699,9 @@ begin
     OnChangePassword(Self, IdUser, Login, Senha, NewPassword);
 end;
 
-procedure TUserControl.ChangeUser(IdUser: Integer; Login, Name, Mail: String; Profile, UserExpired, UserDaysSun,
-  Status: Integer; Privuser: Boolean; const Image: string);
+procedure TUserControl.ChangeUser(IdUser: Integer; Login, Name, Mail: String;
+  Profile, UserExpired, UserDaysSun, Status: Integer; Privuser: Boolean;
+  const Image: string; ImageChanged: Boolean);
 var
   Key: String;
   Password: String;
@@ -1735,7 +1740,6 @@ begin
     '   %s = %s, ' +
     '   %s = %s, ' +
     '   %s = %s, ' +
-    '   %s = %s, ' +
     '   %s = %s ' +
     ' where ' +
     '   %s = %s ';
@@ -1752,12 +1756,35 @@ begin
       TableUsers.FieldUserExpired, IntToStr(UserExpired),
       TableUsers.FieldUserDaysSun, IntToStr(UserDaysSun),
       TableUsers.FieldUserInative, IntToStr(Status),
-      TableUsers.FieldImage, QuotedStr(StringReplace(Image, '''', '''''''', [rfReplaceAll])),
       TableUsers.FieldUserID, IntToStr(IdUser)
     ]));
 
+  if ImageChanged then
+    SaveUserImage(IdUser, Image);
+
   if Assigned(OnChangeUser) then
     OnChangeUser(Self, IdUser, Login, Name, Mail, Profile, Privuser);
+end;
+
+procedure TUserControl.SaveUserImage(IdUser: Integer; const Image: String);
+var
+  SQLValue: String;
+begin
+  if not Assigned(DataConnector) then
+    Exit;
+
+  if DataConnector.UCUpdateTextField(TableUsers.TableName,
+    TableUsers.FieldUserID, IdUser, TableUsers.FieldImage, Image) then
+    Exit;
+
+  if Image = '' then
+    SQLValue := 'NULL'
+  else
+    SQLValue := QuotedStr(StringReplace(Image, '''', '''''''', [rfReplaceAll]));
+
+  DataConnector.UCExecSQL(Format('update %s set %s = %s where %s = %d', [
+    TableUsers.TableName, TableUsers.FieldImage, SQLValue,
+    TableUsers.FieldUserID, IdUser]));
 end;
 
 procedure TUserControl.CheckBD;

@@ -345,6 +345,8 @@ type
     FOptionLevelCritic: String; // added by fduenas
     FPromptDelete_WindowCaption: String; // added by fduenas
     FDeletePerformed: String;
+    FLabelDetail: String;
+    FBtCopy: String;
   protected
 
   public
@@ -381,6 +383,8 @@ type
       write FOptionLevelCritic; // added by fduenas
     property DeletePerformed: String read FDeletePerformed
       write FDeletePerformed; // added by fduenas
+    property LabelDetail: String read FLabelDetail write FLabelDetail;
+    property BtCopy: String read FBtCopy write FBtCopy;
   end;
 
   TUCProfileUserFormMSG = class(TPersistent)
@@ -435,6 +439,8 @@ type
     fStatusDisabled: string;
     fStatusActive: String;
     FLabelImage: string;
+    FBtLoadImage: string;
+    FBtRemoveImage: string;
   protected
 
   public
@@ -459,6 +465,8 @@ type
     property StatusActive: String read fStatusActive write fStatusActive;
     property StatusDisabled: string read fStatusDisabled write fStatusDisabled;
     property LabelImage: string read FLabelImage write FLabelImage;
+    property BtLoadImage: string read FBtLoadImage write FBtLoadImage;
+    property BtRemoveImage: string read FBtRemoveImage write FBtRemoveImage;
   end;
 
   TUCAddProfileFormMSG = class(TPersistent)
@@ -492,6 +500,10 @@ type
     FLabelProfile: String;
     FLabelUser: String;
     fPageControls: string;
+    FSearchLabel: String;
+    FSearchNext: String;
+    FSearchNoResults: String;
+    FSearchInherited: String;
   protected
   public
     constructor Create(Aowner: TComponent);
@@ -504,6 +516,10 @@ type
     property PageMenu: String read FPageMenu write FPageMenu;
     property PageActions: String read FPageActions write FPageActions;
     property PageControls: string read fPageControls write fPageControls;
+    property SearchLabel: String read FSearchLabel write FSearchLabel;
+    property SearchNext: String read FSearchNext write FSearchNext;
+    property SearchNoResults: String read FSearchNoResults write FSearchNoResults;
+    property SearchInherited: String read FSearchInherited write FSearchInherited;
     property BtUnlock: String read FBtUnlock write FBtUnlock;
     property BtLock: String read FBtLock write FBtLock;
     property BtSave: String read FBtGrava write FBtGrava;
@@ -747,6 +763,8 @@ begin
       Self.StatusDisabled := StatusDisabled;
       Self.StatusActive := StatusActive;
       Self.LabelImage := LabelImage;
+      Self.BtLoadImage := BtLoadImage;
+      Self.BtRemoveImage := BtRemoveImage;
     end
   else
     inherited;
@@ -779,6 +797,10 @@ begin
       Self.BtSave := BtSave;
       Self.BtCancel := BtCancel;
       Self.PageControls := PageControls;
+      Self.SearchLabel := SearchLabel;
+      Self.SearchNext := SearchNext;
+      Self.SearchNoResults := SearchNoResults;
+      Self.SearchInherited := SearchInherited;
     end
   else
     inherited;
@@ -962,6 +984,8 @@ begin
       Self.OptionLevelHigh := OptionLevelHigh; // added by fduenas
       Self.OptionLevelCritic := OptionLevelCritic; // added by fduenas
       Self.DeletePerformed := DeletePerformed; // added by fduenas
+      Self.LabelDetail := LabelDetail;
+      Self.BtCopy := BtCopy;
     end
   else
     inherited;

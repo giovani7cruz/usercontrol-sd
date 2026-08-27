@@ -11,10 +11,12 @@ uses
 
 type
   TFakeDataConnection = class(TInterfacedObject, IUCDataConnection,
-    IUCDataConnectionRefresh)
+    IUCDataConnectionRefresh, IUCDataConnectionTextFieldWriter)
   private
     FExecutedSQL: string;
     FRefreshCount: Integer;
+    FUpdatedField: string;
+    FUpdatedValue: string;
   public
     procedure Execute(const SQL: string);
     function CreateDataSet(const SQL: string): TDataSet;
@@ -24,8 +26,12 @@ type
     function DatabaseObjectName: string;
     function TransactionObjectName: string;
     procedure RefreshDataSet(DataSet: TDataSet);
+    procedure UpdateTextField(const TableName, KeyField: string;
+      KeyValue: Int64; const FieldName, Value: string);
     property ExecutedSQL: string read FExecutedSQL;
     property RefreshCount: Integer read FRefreshCount;
+    property UpdatedField: string read FUpdatedField;
+    property UpdatedValue: string read FUpdatedValue;
   end;
 
 procedure Check(Condition: Boolean; const MessageText: string);
@@ -86,6 +92,16 @@ begin
   Result := 'FakeTransaction';
 end;
 
+procedure TFakeDataConnection.UpdateTextField(const TableName,
+  KeyField: string; KeyValue: Int64; const FieldName, Value: string);
+begin
+  Check(SameText(TableName, 'UCUSERS'), 'Tabela incorreta');
+  Check(SameText(KeyField, 'IDUSER'), 'Campo chave incorreto');
+  Check(KeyValue = 7, 'Valor da chave incorreto');
+  FUpdatedField := FieldName;
+  FUpdatedValue := Value;
+end;
+
 var
   Adapter: TUCConnectionAdapter;
   ConnectionObject: TFakeDataConnection;
@@ -120,6 +136,12 @@ begin
         'Nome da conexao incorreto');
       Check(Adapter.GetTransObjectName = 'FakeTransaction',
         'Nome da transacao incorreto');
+      Check(Adapter.UCUpdateTextField('UCUSERS', 'IDUSER', 7, 'UCIMAGE',
+        'base64'), 'Writer de texto nao foi detectado');
+      Check(SameText(ConnectionObject.UpdatedField, 'UCIMAGE'),
+        'Campo de texto nao foi delegado');
+      Check(ConnectionObject.UpdatedValue = 'base64',
+        'Valor de texto nao foi delegado');
 
       DataSet := Adapter.UCGetSQLDataset('select * from ucusers');
       try

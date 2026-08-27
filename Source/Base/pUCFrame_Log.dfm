@@ -48,6 +48,54 @@ object UCFrame_Log: TUCFrame_Log
         Visible = True
       end>
   end
+  object SplitterLogDetail: TSplitter
+    Left = 0
+    Top = 246
+    Width = 563
+    Height = 4
+    Cursor = crVSplit
+    Align = alBottom
+    AutoSnap = False
+    MinSize = 64
+  end
+  object PanelLogDetail: TPanel
+    Left = 0
+    Top = 250
+    Width = 563
+    Height = 112
+    Align = alBottom
+    BevelOuter = bvNone
+    TabOrder = 1
+    object lbLogDetail: TLabel
+      Left = 8
+      Top = 7
+      Width = 94
+      Height = 13
+      Caption = 'Mensagem completa'
+    end
+    object btCopyLog: TBitBtn
+      Left = 425
+      Top = 3
+      Width = 130
+      Height = 25
+      Anchors = [akTop, akRight]
+      Caption = 'Copiar mensagem'
+      TabOrder = 0
+      OnClick = btCopyLogClick
+    end
+    object DBMemoLogDetail: TDBMemo
+      Left = 8
+      Top = 32
+      Width = 547
+      Height = 72
+      Anchors = [akLeft, akTop, akRight, akBottom]
+      DataField = 'MSG'
+      DataSource = DataSource1
+      ReadOnly = True
+      ScrollBars = ssVertical
+      TabOrder = 1
+    end
+  end
   object Panel1: TPanel
     Left = 0
     Top = 362
@@ -55,7 +103,7 @@ object UCFrame_Log: TUCFrame_Log
     Height = 136
     Align = alBottom
     BevelOuter = bvNone
-    TabOrder = 1
+    TabOrder = 2
     object lbUsuario: TLabel
       Left = 16
       Top = 6
@@ -257,6 +305,7 @@ object UCFrame_Log: TUCFrame_Log
     end
   end
   object DataSource1: TDataSource
+    OnDataChange = DataSource1DataChange
     Left = 440
   end
   object ImageList1: TImageList

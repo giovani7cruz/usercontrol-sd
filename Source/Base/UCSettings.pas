@@ -290,6 +290,8 @@ begin
     StatusActive := GetTranslate(DestSettings.Language, StatusActive, 'Const_Inc_StatusActive');
     StatusDisabled := GetTranslate(DestSettings.Language, StatusDisabled, 'Const_Inc_StatusDisabled');
     LabelImage := GetTranslate(DestSettings.Language, LabelImage, 'Const_Inc_LabelImage');
+    BtLoadImage := GetTranslate(DestSettings.Language, BtLoadImage, 'Const_Inc_BtLoadImage');
+    BtRemoveImage := GetTranslate(DestSettings.Language, BtRemoveImage, 'Const_Inc_BtRemoveImage');
   end;
 
   with DestSettings.AddChangeProfile do
@@ -310,6 +312,10 @@ begin
     PageMenu := GetTranslate(DestSettings.Language, PageMenu, 'Const_Perm_PageMenu');
     PageActions := GetTranslate(DestSettings.Language, PageActions, 'Const_Perm_PageActions');
     PageControls := GetTranslate(DestSettings.Language, PageControls, 'Const_Perm_PageControls');
+    SearchLabel := GetTranslate(DestSettings.Language, SearchLabel, 'Const_Perm_SearchLabel');
+    SearchNext := GetTranslate(DestSettings.Language, SearchNext, 'Const_Perm_SearchNext');
+    SearchNoResults := GetTranslate(DestSettings.Language, SearchNoResults, 'Const_Perm_SearchNoResults');
+    SearchInherited := GetTranslate(DestSettings.Language, SearchInherited, 'Const_Perm_SearchInherited');
     BtUnlock := GetTranslate(DestSettings.Language, BtUnlock, 'Const_Perm_BtLibera');
     BtLock := GetTranslate(DestSettings.Language, BtLock, 'Const_Perm_BtBloqueia');
     BtSave := GetTranslate(DestSettings.Language, BtSave, 'Const_Perm_BtGravar');
@@ -396,6 +402,10 @@ begin
       OptionLevelCritic := RetornaLingua(DestSettings.fLanguage, 'Const_LogC_Critic'); // added by fduenas
     if DeletePerformed = '' then
       DeletePerformed := RetornaLingua(DestSettings.fLanguage, 'Const_LogC_ExcluirEfectuada'); // added by fduenas
+    if LabelDetail = '' then
+      LabelDetail := RetornaLingua(DestSettings.fLanguage, 'Const_LogC_LabelDetail');
+    if BtCopy = '' then
+      BtCopy := RetornaLingua(DestSettings.fLanguage, 'Const_LogC_BtCopy');
   end;
 
   with DestSettings.AppMessages do
@@ -578,6 +588,8 @@ begin
     StatusActive := GetTranslate(DestSettings.Language, '', 'Const_Inc_StatusActive');
     StatusDisabled := GetTranslate(DestSettings.Language, '', 'Const_Inc_StatusDisabled');
     LabelImage := GetTranslate(DestSettings.Language, '', 'Const_Inc_LabelImage');
+    BtLoadImage := GetTranslate(DestSettings.Language, '', 'Const_Inc_BtLoadImage');
+    BtRemoveImage := GetTranslate(DestSettings.Language, '', 'Const_Inc_BtRemoveImage');
   end;
 
   with DestSettings.AddChangeProfile do
@@ -598,6 +610,10 @@ begin
     PageMenu := RetornaLingua(DestSettings.Language, 'Const_Perm_PageMenu');
     PageActions := RetornaLingua(DestSettings.Language, 'Const_Perm_PageActions');
     PageControls := RetornaLingua(DestSettings.Language, 'Const_Perm_PageControls');
+    SearchLabel := RetornaLingua(DestSettings.Language, 'Const_Perm_SearchLabel');
+    SearchNext := RetornaLingua(DestSettings.Language, 'Const_Perm_SearchNext');
+    SearchNoResults := RetornaLingua(DestSettings.Language, 'Const_Perm_SearchNoResults');
+    SearchInherited := RetornaLingua(DestSettings.Language, 'Const_Perm_SearchInherited');
     BtUnlock := RetornaLingua(DestSettings.Language, 'Const_Perm_BtLibera');
     BtLock := RetornaLingua(DestSettings.Language, 'Const_Perm_BtBloqueia');
     BtSave := RetornaLingua(DestSettings.Language, 'Const_Perm_BtGravar');
@@ -665,6 +681,8 @@ begin
     OptionLevelCritic := RetornaLingua(DestSettings.Language, 'Const_LogC_Critic');
     DeletePerformed := RetornaLingua(DestSettings.Language,
       'Const_LogC_ExcluirEfectuada');
+    LabelDetail := RetornaLingua(DestSettings.Language, 'Const_LogC_LabelDetail');
+    BtCopy := RetornaLingua(DestSettings.Language, 'Const_LogC_BtCopy');
   end;
 
   with DestSettings.AppMessages do

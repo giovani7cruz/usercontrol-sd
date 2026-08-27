@@ -470,24 +470,43 @@ object frmIncluirUsuario: TfrmIncluirUsuario
     end
     object pImage: TPanel
       Left = 8
-      Height = 117
+      Height = 82
       Top = 151
       Width = 107
       BevelInner = bvSpace
       BevelOuter = bvLowered
-      ClientHeight = 117
+      ClientHeight = 82
       ClientWidth = 107
       TabOrder = 8
       object iUserImage: TImage
         Left = 0
-        Height = 110
+        Height = 75
         Top = 0
         Width = 100
         Center = True
         PopupMenu = pmImage
         Stretch = True
         Transparent = True
+        OnDblClick = miLoadClick
       end
+    end
+    object btLoadImage: TBitBtn
+      Left = 8
+      Height = 25
+      Top = 239
+      Width = 107
+      Caption = 'Carregar'
+      OnClick = miLoadClick
+      TabOrder = 9
+    end
+    object btClearImage: TBitBtn
+      Left = 8
+      Height = 25
+      Top = 269
+      Width = 107
+      Caption = 'Remover'
+      OnClick = miClearClick
+      TabOrder = 10
     end
   end
   object pmImage: TPopupMenu
