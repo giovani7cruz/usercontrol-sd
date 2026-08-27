@@ -97,6 +97,12 @@
   ser consultada somente ao abrir o cadastro para alteracao.
 - Adicionadas extensoes opcionais para leitura e gravacao de campos binarios,
   permitindo que cada conexao transporte BLOBs sem conversao para texto.
+- Iniciada a modernizacao visual com uma classe de estilo sem componente de
+  paleta, fonte Segoe UI e convencoes comuns para botoes, paineis e grades.
+- A lista de usuarios passa a usar acoes e filtros no topo, pesquisa por Enter,
+  colunas responsivas e exibicao traduzida do status ativo/inativo.
+- O cadastro de usuarios passa a ser redimensionavel, com campos ancorados,
+  area de imagem mais clara e acoes principais posicionadas no rodape.
 
 ### Segurança
 

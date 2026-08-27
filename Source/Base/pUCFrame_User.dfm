@@ -6,19 +6,31 @@ object UCFrame_User: TUCFrame_User
   Anchors = [akLeft, akTop, akRight, akBottom]
   TabOrder = 0
   TabStop = True
+  OnResize = FrameResize
   object Panel3: TPanel
-    Left = 631
+    Left = 0
     Top = 0
-    Width = 98
-    Height = 588
-    Align = alRight
+    Width = 729
+    Height = 52
+    Align = alTop
     BevelOuter = bvNone
+    Padding.Left = 12
+    Padding.Top = 10
+    Padding.Right = 12
+    Padding.Bottom = 10
     TabOrder = 0
     object btAdic: TBitBtn
-      Left = 9
+      Left = 12
       Top = 10
-      Width = 81
-      Height = 25
+      Width = 100
+      Height = 32
+      Align = alLeft
+      AlignWithMargins = True
+      Constraints.MinWidth = 100
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 8
+      Margins.Bottom = 0
       Cursor = crHandPoint
       Caption = '&Adicionar'
       TabOrder = 0
@@ -77,10 +89,17 @@ object UCFrame_User: TUCFrame_User
       NumGlyphs = 2
     end
     object BtAlt: TBitBtn
-      Left = 9
-      Top = 41
-      Width = 81
-      Height = 25
+      Left = 120
+      Top = 10
+      Width = 100
+      Height = 32
+      Align = alLeft
+      AlignWithMargins = True
+      Constraints.MinWidth = 100
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 8
+      Margins.Bottom = 0
       Cursor = crHandPoint
       Caption = '&Alterar'
       TabOrder = 1
@@ -139,10 +158,17 @@ object UCFrame_User: TUCFrame_User
       NumGlyphs = 2
     end
     object BtExclui: TBitBtn
-      Left = 9
-      Top = 72
-      Width = 81
-      Height = 25
+      Left = 228
+      Top = 10
+      Width = 100
+      Height = 32
+      Align = alLeft
+      AlignWithMargins = True
+      Constraints.MinWidth = 100
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 8
+      Margins.Bottom = 0
       Cursor = crHandPoint
       Caption = '&Excluir'
       TabOrder = 2
@@ -201,10 +227,17 @@ object UCFrame_User: TUCFrame_User
       NumGlyphs = 2
     end
     object BtAcess: TBitBtn
-      Left = 9
-      Top = 134
-      Width = 81
-      Height = 25
+      Left = 444
+      Top = 10
+      Width = 100
+      Height = 32
+      Align = alLeft
+      AlignWithMargins = True
+      Constraints.MinWidth = 100
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 8
+      Margins.Bottom = 0
       Cursor = crHandPoint
       Caption = '&Acessos'
       TabOrder = 3
@@ -263,10 +296,17 @@ object UCFrame_User: TUCFrame_User
       NumGlyphs = 2
     end
     object BtPass: TBitBtn
-      Left = 9
-      Top = 103
-      Width = 81
-      Height = 25
+      Left = 336
+      Top = 10
+      Width = 100
+      Height = 32
+      Align = alLeft
+      AlignWithMargins = True
+      Constraints.MinWidth = 100
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 8
+      Margins.Bottom = 0
       Cursor = crHandPoint
       Caption = '&Senha'
       TabOrder = 4
@@ -327,17 +367,17 @@ object UCFrame_User: TUCFrame_User
   end
   object Panel1: TPanel
     Left = 0
-    Top = 0
-    Width = 631
-    Height = 588
+    Top = 52
+    Width = 729
+    Height = 536
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 1
     object DbGridUser: TDBGrid
       Left = 0
-      Top = 0
-      Width = 631
-      Height = 493
+      Top = 104
+      Width = 729
+      Height = 432
       Align = alClient
       Ctl3D = True
       DataSource = DataUser
@@ -350,6 +390,7 @@ object UCFrame_User: TUCFrame_User
       TitleFont.Name = 'MS Sans Serif'
       TitleFont.Style = []
       OnDblClick = BtAltClick
+      OnDrawColumnCell = DbGridUserDrawColumnCell
       OnTitleClick = DbGridUserTitleClick
       Columns = <
         item
@@ -372,77 +413,90 @@ object UCFrame_User: TUCFrame_User
           Title.Alignment = taCenter
           Width = 219
           Visible = True
+        end
+        item
+          Expanded = False
+          FieldName = 'UserInative'
+          Title.Alignment = taCenter
+          Width = 90
+          Visible = True
         end>
     end
     object Panel2: TPanel
       Left = 0
-      Top = 493
-      Width = 631
-      Height = 95
-      Align = alBottom
+      Top = 0
+      Width = 729
+      Height = 104
+      Align = alTop
       BevelOuter = bvNone
       TabOrder = 1
       object Label1: TLabel
-        Left = 8
-        Top = 14
+        Left = 12
+        Top = 12
         Width = 34
         Height = 13
         Caption = 'Nome :'
       end
       object Label2: TLabel
-        Left = 214
-        Top = 14
+        Left = 190
+        Top = 12
         Width = 32
         Height = 13
         Caption = 'Login :'
       end
       object Label3: TLabel
-        Left = 340
-        Top = 14
+        Left = 310
+        Top = 12
         Width = 31
         Height = 13
         Caption = 'Email :'
       end
       object Shape1: TShape
-        Left = 8
-        Top = 8
-        Width = 540
+        Left = 12
+        Top = 96
+        Width = 705
         Height = 1
+        Anchors = [akLeft, akRight, akBottom]
       end
       object Nome: TEdit
-        Left = 8
-        Top = 33
-        Width = 200
-        Height = 21
+        Left = 12
+        Top = 31
+        Width = 170
+        Height = 23
         TabOrder = 0
+        OnKeyDown = FilterEditKeyDown
       end
       object Login: TEdit
-        Left = 214
-        Top = 33
-        Width = 120
-        Height = 21
+        Left = 190
+        Top = 31
+        Width = 110
+        Height = 23
         TabOrder = 1
+        OnKeyDown = FilterEditKeyDown
       end
       object Email: TEdit
-        Left = 340
-        Top = 33
-        Width = 200
-        Height = 21
+        Left = 310
+        Top = 31
+        Width = 273
+        Height = 23
+        Anchors = [akLeft, akTop, akRight]
         TabOrder = 2
+        OnKeyDown = FilterEditKeyDown
       end
       object btApplyFilter: TBitBtn
-        Left = 410
-        Top = 60
-        Width = 130
-        Height = 25
+        Left = 591
+        Top = 27
+        Width = 126
+        Height = 32
+        Anchors = [akTop, akRight]
         Caption = 'Aplicar filtro'
         TabOrder = 4
         OnClick = btApplyFilterClick
       end
       object ckShowInactive: TCheckBox
-        Left = 8
-        Top = 64
-        Width = 180
+        Left = 12
+        Top = 69
+        Width = 220
         Height = 17
         Caption = 'Exibir usuários inativos'
         TabOrder = 3

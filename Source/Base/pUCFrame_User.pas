@@ -135,15 +135,22 @@ type
     procedure BtAcessClick(Sender: TObject);
     procedure BtPassClick(Sender: TObject);
     procedure BtExcluiClick(Sender: TObject);
+    procedure DbGridUserDrawColumnCell(Sender: TObject; const Rect: TRect;
+      DataCol: Integer; Column: TColumn; State: TGridDrawState);
     procedure DbGridUserTitleClick(Column: TColumn);
     procedure btApplyFilterClick(Sender: TObject);
     procedure ckShowInactiveClick(Sender: TObject);
+    procedure FilterEditKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure FrameResize(Sender: TObject);
   private
     FTextFilterActive: Boolean;
     procedure ApplyUserFilter;
     procedure ChangeButtonFilter;
     procedure DataSetFilterRecord(DataSet: TDataSet; var Accept: Boolean);
     function LoadUserImage(IdUser: Integer): TBytes;
+    procedure ResizeGridColumns;
+    procedure UpdateFilterControls;
   protected
     FormSenha: TCustomForm;
     FfrmIncluirUsuario: TfrmIncluirUsuario;
@@ -162,7 +169,7 @@ type
 implementation
 
 uses
-  UCMessages, UCDataInfo;
+  UCMessages, UCDataInfo, UCVisualStyle;
 
 {$IFDEF FPC}
 {$R *.lfm}
@@ -350,28 +357,38 @@ begin
 end;
 
 procedure TUCFrame_User.ChangeButtonFilter;
-var
-  IndexImage: Integer;
 begin
-  FTextFilterActive := not FTextFilterActive;
-  Nome.Enabled := not FTextFilterActive;
-  Login.Enabled := not FTextFilterActive;
-  Email.Enabled := not FTextFilterActive;
-
   if FTextFilterActive then
   begin
-    IndexImage := 1;
-    btApplyFilter.Caption := FUsercontrol.UserSettings.UsersForm.BtRemoveFilter;
+    Nome.Clear;
+    Login.Clear;
+    Email.Clear;
+    FTextFilterActive := False;
   end
   else
-  begin
-    IndexImage := 0;
-    btApplyFilter.Caption := FUsercontrol.UserSettings.UsersForm.BtApplyFilter;
-  end;
+    FTextFilterActive := (Trim(Nome.Text) <> '') or
+      (Trim(Login.Text) <> '') or (Trim(Email.Text) <> '');
 
-  btApplyFilter.Glyph := nil;
-  ImageList1.GetBitmap(IndexImage, btApplyFilter.Glyph);
+  UpdateFilterControls;
   ApplyUserFilter;
+end;
+
+procedure TUCFrame_User.FilterEditKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Key <> VK_RETURN then
+    Exit;
+
+  Key := 0;
+  FTextFilterActive := (Trim(Nome.Text) <> '') or
+    (Trim(Login.Text) <> '') or (Trim(Email.Text) <> '');
+  UpdateFilterControls;
+  ApplyUserFilter;
+end;
+
+procedure TUCFrame_User.FrameResize(Sender: TObject);
+begin
+  ResizeGridColumns;
 end;
 
 procedure TUCFrame_User.DataSetFilterRecord(DataSet: TDataSet;
@@ -413,6 +430,28 @@ end;
 procedure TUCFrame_User.DbGridUserTitleClick(Column: TColumn);
 begin
   FUsercontrol.DataConnector.OrderBy(Column.Field.DataSet, Column.FieldName);
+end;
+
+procedure TUCFrame_User.DbGridUserDrawColumnCell(Sender: TObject;
+  const Rect: TRect; DataCol: Integer; Column: TColumn;
+  State: TGridDrawState);
+var
+  StatusText: String;
+  TextRect: TRect;
+begin
+  if not SameText(Column.FieldName, 'UserInative') then
+    Exit;
+
+  if Column.Field.AsInteger = 0 then
+    StatusText := FUsercontrol.UserSettings.AddChangeUser.StatusActive
+  else
+    StatusText := FUsercontrol.UserSettings.AddChangeUser.StatusDisabled;
+
+  DbGridUser.Canvas.FillRect(Rect);
+  TextRect := Rect;
+  Inc(TextRect.Left, 6);
+  DrawText(DbGridUser.Canvas.Handle, PChar(StatusText), Length(StatusText),
+    TextRect, DT_LEFT or DT_VCENTER or DT_SINGLELINE or DT_END_ELLIPSIS);
 end;
 
 destructor TUCFrame_User.Destroy;
@@ -551,12 +590,23 @@ end;
 
 procedure TUCFrame_User.SetWindow;
 begin
+  TUCVisualStyle.ApplyFrame(Self);
+  TUCVisualStyle.StyleActionPanel(Panel3);
+  TUCVisualStyle.StyleActionPanel(Panel2);
+  TUCVisualStyle.StyleGrid(DbGridUser);
+  TUCVisualStyle.StyleActionButton(btAdic);
+  TUCVisualStyle.StyleActionButton(BtAlt);
+  TUCVisualStyle.StyleActionButton(BtExclui);
+  TUCVisualStyle.StyleActionButton(BtAcess);
+  TUCVisualStyle.StyleActionButton(BtPass);
+  TUCVisualStyle.StyleActionButton(btApplyFilter);
+  TUCVisualStyle.StyleEdit(Nome);
+  TUCVisualStyle.StyleEdit(Login);
+  TUCVisualStyle.StyleEdit(Email);
+
   FDataSetCadastroUsuario.AfterScroll := FDataSetCadastroUsuarioAfterScroll;
   FTextFilterActive := False;
   ckShowInactive.Checked := False;
-  Nome.Enabled := True;
-  Login.Enabled := True;
-  Email.Enabled := True;
   with FUsercontrol.UserSettings.UsersForm do
   begin
     DbGridUser.Columns[0].Title.Caption := ColName;
@@ -572,7 +622,56 @@ begin
     ckShowInactive.Caption := ShowInactive;
   end;
 
+  TUCVisualStyle.FitButtonWidth(btAdic);
+  TUCVisualStyle.FitButtonWidth(BtAlt);
+  TUCVisualStyle.FitButtonWidth(BtExclui);
+  TUCVisualStyle.FitButtonWidth(BtPass);
+  TUCVisualStyle.FitButtonWidth(BtAcess);
+
+  DbGridUser.Columns[3].Title.Caption :=
+    FUsercontrol.UserSettings.AddChangeUser.LabelStatus;
+
+  UpdateFilterControls;
+  ResizeGridColumns;
   ApplyUserFilter;
+end;
+
+procedure TUCFrame_User.ResizeGridColumns;
+var
+  AvailableWidth: Integer;
+begin
+  if DbGridUser.Columns.Count < 4 then
+    Exit;
+
+  AvailableWidth := DbGridUser.ClientWidth - 34;
+  if AvailableWidth < 300 then
+    Exit;
+
+  DbGridUser.Columns[0].Width := (AvailableWidth * 36) div 100;
+  DbGridUser.Columns[1].Width := (AvailableWidth * 20) div 100;
+  DbGridUser.Columns[2].Width := (AvailableWidth * 32) div 100;
+  DbGridUser.Columns[3].Width := AvailableWidth -
+    DbGridUser.Columns[0].Width - DbGridUser.Columns[1].Width -
+    DbGridUser.Columns[2].Width;
+end;
+
+procedure TUCFrame_User.UpdateFilterControls;
+var
+  IndexImage: Integer;
+begin
+  if FTextFilterActive then
+  begin
+    IndexImage := 1;
+    btApplyFilter.Caption := FUsercontrol.UserSettings.UsersForm.BtRemoveFilter;
+  end
+  else
+  begin
+    IndexImage := 0;
+    btApplyFilter.Caption := FUsercontrol.UserSettings.UsersForm.BtApplyFilter;
+  end;
+
+  btApplyFilter.Glyph := nil;
+  ImageList1.GetBitmap(IndexImage, btApplyFilter.Glyph);
 end;
 
 procedure TUCFrame_User.SetWindowUser(Adicionar: Boolean);
@@ -615,6 +714,9 @@ begin
     FfrmIncluirUsuario.miLoad.Caption := BtLoadImage;
     FfrmIncluirUsuario.miClear.Caption := BtRemoveImage;
   end;
+
+  TUCVisualStyle.FitButtonWidth(FfrmIncluirUsuario.btGravar);
+  TUCVisualStyle.FitButtonWidth(FfrmIncluirUsuario.btCancela);
 end;
 
 end.

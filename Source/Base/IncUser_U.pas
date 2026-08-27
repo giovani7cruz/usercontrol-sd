@@ -172,7 +172,8 @@ type
 implementation
 
 uses
-  SenhaForm_U;
+  SenhaForm_U,
+  UCVisualStyle;
 
 {$IFDEF FPC}
 {$R *.lfm}
@@ -187,8 +188,20 @@ end;
 
 procedure TfrmIncluirUsuario.FormCreate(Sender: TObject);
 begin
-  Self.BorderIcons := [];
-  Self.BorderStyle := bsDialog;
+  Self.BorderIcons := [biSystemMenu];
+  Constraints.MinWidth := 560;
+  Constraints.MinHeight := 380;
+  TUCVisualStyle.ApplyForm(Self);
+  TUCVisualStyle.StyleHeader(Panel1, LbDescricao);
+  TUCVisualStyle.StyleActionPanel(Panel2);
+  TUCVisualStyle.StyleActionPanel(Panel3);
+  TUCVisualStyle.StylePrimaryButton(btGravar);
+  TUCVisualStyle.StyleSecondaryButton(btCancela);
+  TUCVisualStyle.StyleActionButton(btLoadImage);
+  TUCVisualStyle.StyleActionButton(btClearImage);
+  TUCVisualStyle.StyleEdit(EditNome);
+  TUCVisualStyle.StyleEdit(EditLogin);
+  TUCVisualStyle.StyleEdit(EditEmail);
   FImageChanged := False;
   UpdateImageActions;
 end;

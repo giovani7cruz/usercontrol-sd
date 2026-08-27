@@ -56,6 +56,7 @@ contains
   MsgsForm_U in '..\..\source\Base\MsgsForm_U.pas',
   UCDataInfo in '..\..\source\Base\UCDataInfo.pas',
   UCMessages in '..\..\source\Base\UCMessages.pas',
+  UCVisualStyle in '..\..\source\Base\UCVisualStyle.pas',
   UserPermis_U in '..\..\source\Base\UserPermis_U.pas',
   UCSettings in '..\..\source\Base\UCSettings.pas',
   LoginWindow_U in '..\..\source\Base\LoginWindow_U.pas',
