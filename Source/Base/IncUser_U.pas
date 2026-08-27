@@ -156,15 +156,8 @@ type
     procedure UpdateImageActions;
     
 	{$IFDEF DELPHI2006_UP}
-	function ImageToBase64(Graphic: TGraphic): string;
-    function Base64ToImage(Base64: string): TOleGraphic;
+    function ImageToBytes(Graphic: TGraphic): TBytes;
     function GetImagePath: string;
-
-    function StreamToBase64(Value: TMemoryStream): string;
-    function Base64ToStream(Value: String): TBytesStream;
-    
-	function CompactStream(Value: TMemoryStream): TMemoryStream;
-    function UnpackStream(Value: TMemoryStream): TMemoryStream;
 	{$ENDIF}
   public
     FAltera: Boolean;
@@ -172,18 +165,14 @@ type
     FDataSetCadastroUsuario: TDataSet;
     vNovoIDUsuario: Integer;
 	{$IFDEF DELPHI2006_UP}
-    procedure SetImage(Image: string);
+    procedure SetImage(const Image: TBytes);
 	{$ENDIF}
   end;
 
 implementation
 
 uses
-  SenhaForm_U,
-  {$IFNDEF FPC}
-  IdCoderMIME,
-  {$ENDIF}
-  ZLib;
+  SenhaForm_U;
 
 {$IFDEF FPC}
 {$R *.lfm}
@@ -204,55 +193,6 @@ begin
   UpdateImageActions;
 end;
 
-{$IFDEF DELPHI2006_UP}
-function TfrmIncluirUsuario.Base64ToImage(Base64: string): TOleGraphic;
-var
-  bs: TBytesStream;
-  ms: TMemoryStream; 
-begin
-  Result := nil;
-  if Base64 = '' then
-    Exit;
-
-  bs := Base64ToStream(Base64);
-  try
-    bs.Position := 0;
-    ms := UnpackStream(bs);
-    try
-      Result := TOleGraphic.Create;
-      try
-        Result.LoadFromStream(ms);
-      except
-        FreeAndNil(Result);
-        raise;
-      end;
-    finally
-      ms.Free;
-    end;
-  finally
-    bs.Free;
-  end;
-end;
-{$ENDIF}
-
-{$IFDEF DELPHI2006_UP}
-function TfrmIncluirUsuario.Base64ToStream(Value: String): TBytesStream;
-var
-  dm: TIdDecoderMIME;
-begin
-  Result := TBytesStream.Create;
-  dm := TIdDecoderMIME.Create(nil);
-  try
-    dm.DecodeBegin(Result);
-    dm.Decode(Value);
-    dm.DecodeEnd;
-    Result.Position := 0;
-  finally
-    dm.Free;
-  end;
-end;
-{$ENDIF}
-
 procedure TfrmIncluirUsuario.btCancelaClick(Sender: TObject);
 begin
   Close;
@@ -268,7 +208,7 @@ var
   vUserExpired: Integer;
   vPerfil: Integer;
   vPrivilegiado: Boolean;
-  vImage: String;
+  vImage: TBytes;
 
   procedure SendEmail;
   var
@@ -318,19 +258,19 @@ begin
       begin // alterar user
         if FImageChanged then
           {$IFDEF DELPHI2006_UP}
-          vImage := ImageToBase64(iUserImage.Picture.Graphic)
+          vImage := ImageToBytes(iUserImage.Picture.Graphic)
           {$ELSE}
-          vImage := ''
+          vImage := nil
           {$ENDIF}
         else
-          vImage := '';
+          vImage := nil;
 
         FUserControl.ChangeUser(vNovoIDUsuario, vLogin, vNome, vEmail, vPerfil, vUserExpired, SpinExpira.Value,
           ComboStatus.ItemIndex, vPrivilegiado, 
 		  {$IFDEF DELPHI2006_UP}
 		  vImage, FImageChanged
 		  {$ELSE}
-		  '', False
+		  nil, False
 		  {$ENDIF}
 		  
 		  );
@@ -369,9 +309,9 @@ begin
             FUserControl.AddUser(vLogin, vNovaSenha, vNome, vEmail, vPerfil, vUserExpired, SpinExpira.Value,
               vPrivilegiado, 
 			  {$IFDEF DELPHI2006_UP}
-			  ImageToBase64(iUserImage.Picture.Graphic)
+			  ImageToBytes(iUserImage.Picture.Graphic)
 			  {$ELSE}
-			  ''
+			  nil
 			  {$ENDIF}
 			  );
 
@@ -429,29 +369,25 @@ begin
 end;
 
 {$IFDEF DELPHI2006_UP}
-function TfrmIncluirUsuario.ImageToBase64(Graphic: TGraphic): string;
+function TfrmIncluirUsuario.ImageToBytes(Graphic: TGraphic): TBytes;
 var
-  ms, msCompact: TMemoryStream;
+  Stream: TMemoryStream;
 begin
-  Result := '';
-  if Graphic <> nil then
-  begin
-    if Graphic.Empty then
-      Exit;
+  SetLength(Result, 0);
+  if (Graphic = nil) or Graphic.Empty then
+    Exit;
 
-    ms := TMemoryStream.Create;
-    try
-      Graphic.SaveToStream(ms);
-      ms.Position := 0;
-      msCompact := CompactStream(ms);
-      try
-        Result := StreamToBase64(msCompact);
-      finally
-        msCompact.Free;
-      end;
-    finally
-      ms.Free;
+  Stream := TMemoryStream.Create;
+  try
+    Graphic.SaveToStream(Stream);
+    SetLength(Result, Stream.Size);
+    if Stream.Size > 0 then
+    begin
+      Stream.Position := 0;
+      Stream.ReadBuffer(Result[0], Stream.Size);
     end;
+  finally
+    Stream.Free;
   end;
 end;
 {$ENDIF}
@@ -571,22 +507,41 @@ begin
 end;
 
 {$IFDEF DELPHI2006_UP}
-procedure TfrmIncluirUsuario.SetImage(Image: string);
+procedure TfrmIncluirUsuario.SetImage(const Image: TBytes);
 var
-  og: TOleGraphic;
+  JpegImage: TJPEGImage;
+  Stream: TMemoryStream;
+  ValidImage: Boolean;
 begin
-  if Image = '' then
-    iUserImage.Picture := nil
-  else
+  iUserImage.Picture := nil;
+  ValidImage := False;
+
+  { Only the new raw-JPEG format is accepted. Legacy Base64/ZLib values are
+    intentionally ignored. }
+  if (Length(Image) >= 2) and (Image[0] = $FF) and (Image[1] = $D8) then
   begin
-    og := Base64ToImage(Image);
+    Stream := TMemoryStream.Create;
     try
-      iUserImage.Picture.Assign(og);
+      try
+        Stream.WriteBuffer(Image[0], Length(Image));
+        Stream.Position := 0;
+        JpegImage := TJPEGImage.Create;
+        try
+          JpegImage.LoadFromStream(Stream);
+          iUserImage.Picture.Assign(JpegImage);
+          ValidImage := True;
+        finally
+          JpegImage.Free;
+        end;
+      except
+        iUserImage.Picture := nil;
+      end;
     finally
-      og.Free;
+      Stream.Free;
     end;
   end;
-  FImageChanged := False;
+  { A legacy or corrupt value is cleared the next time the user is saved. }
+  FImageChanged := (Length(Image) > 0) and not ValidImage;
   UpdateImageActions;
 end;
 {$ENDIF}
@@ -601,35 +556,6 @@ begin
   btClearImage.Enabled := HasImage;
   miClear.Enabled := HasImage;
 end;
-
-{$IFDEF DELPHI2006_UP}
-function TfrmIncluirUsuario.StreamToBase64(Value: TMemoryStream): string;
-begin
-  Result := '';
-
-  if Value <> nil then
-    Result := TIdEncoderMIME.EncodeStream(Value, Value.Size);
-
-end;
-{$ENDIF}
-
-{$IFDEF DELPHI2006_UP}
-function TfrmIncluirUsuario.UnpackStream(Value: TMemoryStream): TMemoryStream;
-var
-  LUnZip: TZDecompressionStream;
-begin
-  Value.Position := 0;
-  Result := TMemoryStream.Create;
-  LUnZip := TZDecompressionStream.Create(Value);
-  try
-    { Decompress data. }
-    Result.CopyFrom(LUnZip, 0);
-    Result.Position := 0;
-  finally
-    LUnZip.Free;
-  end;
-end;
-{$ENDIF}
 
 procedure TfrmIncluirUsuario.btlimpaClick(Sender: TObject);
 begin
@@ -676,23 +602,5 @@ procedure TfrmIncluirUsuario.ckUserExpiredClick(Sender: TObject);
 begin
   SpinExpira.Enabled := not ckUserExpired.Checked;
 end;
-
-{$IFDEF DELPHI2006_UP}
-function TfrmIncluirUsuario.CompactStream(Value: TMemoryStream): TMemoryStream;
-var
-  LZip: TZCompressionStream;
-begin
-  Result := TMemoryStream.Create;
-  LZip := TZCompressionStream.Create(Result, zcMax, 15);
-  try
-    Value.Position := 0;
-    { Compress data. }
-    LZip.CopyFrom(Value, Value.Size);
-  finally
-    LZip.Free;
-  end;
-  Result.Position := 0;
-end;
-{$ENDIF}
 
 end.

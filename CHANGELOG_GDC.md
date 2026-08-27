@@ -81,13 +81,22 @@
   exibi-los, combinavel com os filtros de nome, login e e-mail.
 - A tela de logs agora exibe a mensagem completa da linha selecionada em um
   painel redimensionavel e permite copiar o conteudo para a area de transferencia.
-- Imagens de usuarios deixam de ser incorporadas ao SQL principal quando a
-  conexao oferece uma operacao separada de gravacao de campo textual; o adapter
-  do Aguia usa dataset e POST.
+- Imagens de usuarios deixam de ser incorporadas ao SQL principal; o adapter
+  passa a ler e gravar o BLOB como bytes por dataset e `ApplyDataLog`.
 - O cadastro passa a exibir botoes para carregar e remover a imagem, envia a foto
   apenas quando alterada e normaliza novas imagens para JPEG de ate 256 pixels.
+- Removido o formato legado Base64/ZLib: novas fotos sao persistidas como JPEG
+  bruto no BLOB e valores antigos deixam de ser carregados.
 - A edicao de permissoes ganhou uma busca global por descricao e identificadores
   internos, cobrindo menus, acoes e permissoes estendidas sem alterar marcacoes.
+- A carga de permissoes passa a usar indices em memoria em vez de executar um
+  `Locate` para cada item; a gravacao envia somente inclusoes e remocoes reais.
+- Novas permissoes sao inseridas antes das remocoes, evitando revogar direitos
+  existentes quando um conector sem suporte transacional falha na inclusao.
+- A listagem de usuarios deixa de transportar todas as imagens; a foto passa a
+  ser consultada somente ao abrir o cadastro para alteracao.
+- Adicionadas extensoes opcionais para leitura e gravacao de campos binarios,
+  permitindo que cada conexao transporte BLOBs sem conversao para texto.
 
 ### Segurança
 

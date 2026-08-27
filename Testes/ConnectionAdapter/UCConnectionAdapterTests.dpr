@@ -11,12 +11,13 @@ uses
 
 type
   TFakeDataConnection = class(TInterfacedObject, IUCDataConnection,
-    IUCDataConnectionRefresh, IUCDataConnectionTextFieldWriter)
+    IUCDataConnectionRefresh, IUCDataConnectionBinaryFieldWriter,
+    IUCDataConnectionBinaryFieldReader)
   private
     FExecutedSQL: string;
     FRefreshCount: Integer;
     FUpdatedField: string;
-    FUpdatedValue: string;
+    FUpdatedValue: TBytes;
   public
     procedure Execute(const SQL: string);
     function CreateDataSet(const SQL: string): TDataSet;
@@ -26,12 +27,14 @@ type
     function DatabaseObjectName: string;
     function TransactionObjectName: string;
     procedure RefreshDataSet(DataSet: TDataSet);
-    procedure UpdateTextField(const TableName, KeyField: string;
-      KeyValue: Int64; const FieldName, Value: string);
+    function ReadBinaryField(const TableName, KeyField: string;
+      KeyValue: Int64; const FieldName: string): TBytes;
+    procedure UpdateBinaryField(const TableName, KeyField: string;
+      KeyValue: Int64; const FieldName: string; const Value: TBytes);
     property ExecutedSQL: string read FExecutedSQL;
     property RefreshCount: Integer read FRefreshCount;
     property UpdatedField: string read FUpdatedField;
-    property UpdatedValue: string read FUpdatedValue;
+    property UpdatedValue: TBytes read FUpdatedValue;
   end;
 
 procedure Check(Condition: Boolean; const MessageText: string);
@@ -92,14 +95,21 @@ begin
   Result := 'FakeTransaction';
 end;
 
-procedure TFakeDataConnection.UpdateTextField(const TableName,
-  KeyField: string; KeyValue: Int64; const FieldName, Value: string);
+function TFakeDataConnection.ReadBinaryField(const TableName,
+  KeyField: string; KeyValue: Int64; const FieldName: string): TBytes;
+begin
+  Result := Copy(FUpdatedValue, 0, Length(FUpdatedValue));
+end;
+
+procedure TFakeDataConnection.UpdateBinaryField(const TableName,
+  KeyField: string; KeyValue: Int64; const FieldName: string;
+  const Value: TBytes);
 begin
   Check(SameText(TableName, 'UCUSERS'), 'Tabela incorreta');
   Check(SameText(KeyField, 'IDUSER'), 'Campo chave incorreto');
   Check(KeyValue = 7, 'Valor da chave incorreto');
   FUpdatedField := FieldName;
-  FUpdatedValue := Value;
+  FUpdatedValue := Copy(Value, 0, Length(Value));
 end;
 
 var
@@ -107,6 +117,8 @@ var
   ConnectionObject: TFakeDataConnection;
   Connection: IUCDataConnection;
   DataSet: TDataSet;
+  ImageBytes: TBytes;
+  ReadBytes: TBytes;
   RaisedExpectedException: Boolean;
 begin
   try
@@ -136,12 +148,20 @@ begin
         'Nome da conexao incorreto');
       Check(Adapter.GetTransObjectName = 'FakeTransaction',
         'Nome da transacao incorreto');
-      Check(Adapter.UCUpdateTextField('UCUSERS', 'IDUSER', 7, 'UCIMAGE',
-        'base64'), 'Writer de texto nao foi detectado');
+      ImageBytes := TBytes.Create($FF, $D8, $FF, $D9);
+      Check(Adapter.UCUpdateBinaryField('UCUSERS', 'IDUSER', 7, 'UCIMAGE',
+        ImageBytes), 'Writer binario nao foi detectado');
       Check(SameText(ConnectionObject.UpdatedField, 'UCIMAGE'),
-        'Campo de texto nao foi delegado');
-      Check(ConnectionObject.UpdatedValue = 'base64',
-        'Valor de texto nao foi delegado');
+        'Campo binario nao foi delegado');
+      ReadBytes := ConnectionObject.UpdatedValue;
+      Check((Length(ReadBytes) = Length(ImageBytes)) and
+        CompareMem(@ReadBytes[0], @ImageBytes[0], Length(ImageBytes)),
+        'Valor binario nao foi delegado');
+      ReadBytes := Adapter.UCReadBinaryField('UCUSERS', 'IDUSER', 7,
+        'UCIMAGE');
+      Check((Length(ReadBytes) = Length(ImageBytes)) and
+        CompareMem(@ReadBytes[0], @ImageBytes[0], Length(ImageBytes)),
+        'Leitura binaria nao foi delegada');
 
       DataSet := Adapter.UCGetSQLDataset('select * from ucusers');
       try

@@ -102,8 +102,11 @@ type
     procedure CloseDataSet(DataSet : TDataSet); virtual;
     procedure OpenDataSet(DataSet : TDataSet); virtual;
     procedure RefreshDataSet(DataSet: TDataSet); virtual;
-    function UCUpdateTextField(const TableName, KeyField: String;
-      KeyValue: Int64; const FieldName, Value: String): Boolean; virtual;
+    function UCReadBinaryField(const TableName, KeyField: String;
+      KeyValue: Int64; const FieldName: String): TBytes; virtual;
+    function UCUpdateBinaryField(const TableName, KeyField: String;
+      KeyValue: Int64; const FieldName: String;
+      const Value: TBytes): Boolean; virtual;
   end;
 
 implementation
@@ -129,6 +132,48 @@ begin
   OpenDataSet(DataSet);
 end;
 
+function TUCDataConnector.UCReadBinaryField(const TableName,
+  KeyField: String; KeyValue: Int64; const FieldName: String): TBytes;
+var
+  DataSet: TDataSet;
+  Field: TField;
+  Stream: TMemoryStream;
+begin
+  SetLength(Result, 0);
+  DataSet := UCGetSQLDataset(Format(
+    'SELECT %s AS UCBinaryValue FROM %s WHERE %s = %d',
+    [FieldName, TableName, KeyField, KeyValue]));
+  try
+    if not DataSet.Active then
+      OpenDataSet(DataSet);
+    if not DataSet.IsEmpty then
+    begin
+      Field := DataSet.FieldByName('UCBinaryValue');
+      if not Field.IsNull then
+      begin
+        if not (Field is TBlobField) then
+          raise EDatabaseError.CreateFmt(
+            'O campo %s.%s nao e um BLOB', [TableName, FieldName]);
+
+        Stream := TMemoryStream.Create;
+        try
+          TBlobField(Field).SaveToStream(Stream);
+          SetLength(Result, Stream.Size);
+          if Stream.Size > 0 then
+          begin
+            Stream.Position := 0;
+            Stream.ReadBuffer(Result[0], Stream.Size);
+          end;
+        finally
+          Stream.Free;
+        end;
+      end;
+    end;
+  finally
+    DataSet.Free;
+  end;
+end;
+
 procedure TUCDataConnector.OrderBy(const DataSet: TDataSet; const FieldName: string);
 begin
   ValidateDataSet(DataSet, 'OrderBy');
@@ -136,8 +181,9 @@ begin
     raise Exception.Create('OrderBy: nome do campo nao informado');
 end;
 
-function TUCDataConnector.UCUpdateTextField(const TableName, KeyField: String;
-  KeyValue: Int64; const FieldName, Value: String): Boolean;
+function TUCDataConnector.UCUpdateBinaryField(const TableName,
+  KeyField: String; KeyValue: Int64; const FieldName: String;
+  const Value: TBytes): Boolean;
 begin
   Result := False;
 end;

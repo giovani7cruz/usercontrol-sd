@@ -143,6 +143,7 @@ type
     procedure ApplyUserFilter;
     procedure ChangeButtonFilter;
     procedure DataSetFilterRecord(DataSet: TDataSet; var Accept: Boolean);
+    function LoadUserImage(IdUser: Integer): TBytes;
   protected
     FormSenha: TCustomForm;
     FfrmIncluirUsuario: TfrmIncluirUsuario;
@@ -204,7 +205,7 @@ begin
     ckUserExpired.Checked := StrToBool(FDataSetCadastroUsuario.FieldByName('UserNaoExpira').AsString);
     SpinExpira.Value := FDataSetCadastroUsuario.FieldByName('DaysOfExpire').AsInteger;
 	{$IFDEF DELPHI2006_UP}
-    SetImage(FDataSetCadastroUsuario.FieldByName('Image').AsString);
+    SetImage(Self.LoadUserImage(vNovoIDUsuario));
 	{$ENDIF}
     ComboStatus.ItemIndex := FDataSetCadastroUsuario.FieldByName('UserInative').AsInteger;
     FfrmIncluirUsuario.ComboStatus.Enabled :=
@@ -217,6 +218,13 @@ begin
   end;
   FreeAndNil(FfrmIncluirUsuario);
   ApplyUserFilter;
+end;
+
+function TUCFrame_User.LoadUserImage(IdUser: Integer): TBytes;
+begin
+  with FUsercontrol.TableUsers do
+    Result := FUsercontrol.DataConnector.UCReadBinaryField(TableName,
+      FieldUserID, IdUser, FieldImage);
 end;
 
 procedure TUCFrame_User.btApplyFilterClick(Sender: TObject);

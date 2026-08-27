@@ -209,6 +209,8 @@ type
     FListaControl: array of PTreeControl;
     FSearchResults: array of TPermissionSearchResult;
     FSearchIndex: Integer;
+    FOriginalRights: TStringList;
+    FOriginalExtraRights: TStringList;
     {$IFNDEF FPC}
     { .$IFDEF UCACTMANAGER }
     FActionMainMenuBar: TActionMainMenuBar;
@@ -233,6 +235,13 @@ type
     procedure NavigateSearch(Delta: Integer);
     procedure ShowSearchResult;
     function SearchResultState(const SearchResult: TPermissionSearchResult): Integer;
+    function CreateRightsIndex: TStringList;
+    function ExtraRightKey(const FormName, ComponentName: String): String;
+    procedure LoadRightsIndex(DataSet: TDataSet; Rights: TStringList;
+      ExtraRights: Boolean);
+    procedure DeleteRight(const ItemRight: String);
+    procedure DeleteRightEX(const RightKey: String);
+    procedure SaveChangedRights;
   public
     FTempIdUser: Integer;
     FUserControl: TUserControl;
@@ -259,46 +268,158 @@ uses
 
 procedure TUserPermis.BtGravaClick(Sender: TObject);
 var
-  Contador: Integer;
+  PreviousCaption: String;
 begin
+  PreviousCaption := Self.Caption;
   TBitBtn(Sender).Enabled := False;
   Self.Caption := 'Waiting...';
   Self.Enabled := False;
 
   try
-    with FUserControl.TableRights do
-    begin
-      FUserControl.DataConnector.UCExecSQL('Delete from ' + TableName + ' Where '
-        + FieldUserID + ' = ' + IntToStr(FTempIdUser) + ' and ' + FieldModule +
-        ' = ' + QuotedStr(FUserControl.ApplicationID));
-      FUserControl.DataConnector.UCExecSQL('Delete from ' + TableName +
-        'EX Where ' + FieldUserID + ' = ' + IntToStr(FTempIdUser) + ' and ' +
-        FieldModule + ' = ' + QuotedStr(FUserControl.ApplicationID));
-    end;
-
-    for Contador := 0 to TreeMenu.Items.Count - 1 do
-      if PTreeMenu(TreeMenu.Items[Contador].Data).Selecionado = 1 then
-        FUserControl.AddRight(FTempIdUser,
-          PTreeMenu(TreeMenu.Items[Contador].Data).MenuName);
-
-    for Contador := 0 to TreeAction.Items.Count - 1 do
-      if PTreeAction(TreeAction.Items[Contador].Data).Selecionado = 1 then
-        FUserControl.AddRight(FTempIdUser,
-          PTreeAction(TreeAction.Items[Contador].Data).MenuName);
-
-    // Extra Rights
-    for Contador := 0 to Pred(TreeControls.Items.Count) do
-      if PTreeControl(TreeControls.Items[Contador].Data).Selecionado = 1 then
-        FUserControl.AddRightEX(FTempIdUser, FUserControl.ApplicationID,
-          PTreeControl(TreeControls.Items[Contador].Data).FormName,
-          PTreeControl(TreeControls.Items[Contador].Data).CompName);
-
+    SaveChangedRights;
   finally
+    Self.Caption := PreviousCaption;
     Self.Enabled := True;
     TBitBtn(Sender).Enabled := True;
   end;
 
   Close;
+end;
+
+function TUserPermis.CreateRightsIndex: TStringList;
+begin
+  Result := TStringList.Create;
+  Result.CaseSensitive := False;
+  Result.Duplicates := dupIgnore;
+  Result.Sorted := True;
+end;
+
+function TUserPermis.ExtraRightKey(const FormName,
+  ComponentName: String): String;
+begin
+  Result := FormName + #1 + ComponentName;
+end;
+
+procedure TUserPermis.LoadRightsIndex(DataSet: TDataSet; Rights: TStringList;
+  ExtraRights: Boolean);
+var
+  ComponentField: TField;
+  FormField: TField;
+begin
+  Rights.Clear;
+  if not Assigned(DataSet) or not DataSet.Active then
+    Exit;
+
+  ComponentField := DataSet.FieldByName('ObjName');
+  if ExtraRights then
+    FormField := DataSet.FieldByName('FormName')
+  else
+    FormField := nil;
+
+  DataSet.DisableControls;
+  try
+    DataSet.First;
+    while not DataSet.Eof do
+    begin
+      if ExtraRights then
+        Rights.Add(ExtraRightKey(FormField.AsString, ComponentField.AsString))
+      else if ComponentField.AsString <> '' then
+        Rights.Add(ComponentField.AsString);
+      DataSet.Next;
+    end;
+  finally
+    DataSet.EnableControls;
+  end;
+end;
+
+procedure TUserPermis.DeleteRight(const ItemRight: String);
+begin
+  with FUserControl.TableRights do
+    FUserControl.DataConnector.UCExecSQL(Format(
+      'DELETE FROM %s WHERE %s = %d AND %s = %s AND %s = %s',
+      [TableName, FieldUserID, FTempIdUser, FieldModule,
+      QuotedStr(FUserControl.ApplicationID), FieldComponentName,
+      QuotedStr(ItemRight)]));
+end;
+
+procedure TUserPermis.DeleteRightEX(const RightKey: String);
+var
+  SeparatorPos: Integer;
+  FormName: String;
+  ComponentName: String;
+begin
+  SeparatorPos := Pos(#1, RightKey);
+  if SeparatorPos = 0 then
+    Exit;
+
+  FormName := Copy(RightKey, 1, SeparatorPos - 1);
+  ComponentName := Copy(RightKey, SeparatorPos + 1, MaxInt);
+  with FUserControl.TableRights do
+    FUserControl.DataConnector.UCExecSQL(Format(
+      'DELETE FROM %sEX WHERE %s = %d AND %s = %s AND %s = %s AND %s = %s',
+      [TableName, FieldUserID, FTempIdUser, FieldModule,
+      QuotedStr(FUserControl.ApplicationID), FieldFormName,
+      QuotedStr(FormName), FieldComponentName, QuotedStr(ComponentName)]));
+end;
+
+procedure TUserPermis.SaveChangedRights;
+var
+  CurrentRights: TStringList;
+  CurrentExtraRights: TStringList;
+  I: Integer;
+  SeparatorPos: Integer;
+  RightKey: String;
+begin
+  CurrentRights := CreateRightsIndex;
+  CurrentExtraRights := CreateRightsIndex;
+  try
+    for I := 0 to TreeMenu.Items.Count - 1 do
+      if PTreeMenu(TreeMenu.Items[I].Data).Selecionado = 1 then
+        CurrentRights.Add(PTreeMenu(TreeMenu.Items[I].Data).MenuName);
+
+    for I := 0 to TreeAction.Items.Count - 1 do
+      if (not PTreeAction(TreeAction.Items[I].Data).Grupo) and
+        (PTreeAction(TreeAction.Items[I].Data).Selecionado = 1) then
+        CurrentRights.Add(PTreeAction(TreeAction.Items[I].Data).MenuName);
+
+    for I := 0 to TreeControls.Items.Count - 1 do
+      if (not PTreeControl(TreeControls.Items[I].Data).Grupo) and
+        (PTreeControl(TreeControls.Items[I].Data).Selecionado = 1) then
+        CurrentExtraRights.Add(ExtraRightKey(
+          PTreeControl(TreeControls.Items[I].Data).FormName,
+          PTreeControl(TreeControls.Items[I].Data).CompName));
+
+    { Additions are executed before removals. Without transaction support in the
+      connector, a failed inclusion must not revoke an existing permission. }
+    for I := 0 to CurrentRights.Count - 1 do
+      if FOriginalRights.IndexOf(CurrentRights[I]) < 0 then
+        FUserControl.AddRight(FTempIdUser, CurrentRights[I]);
+
+    for I := 0 to CurrentExtraRights.Count - 1 do
+      if FOriginalExtraRights.IndexOf(CurrentExtraRights[I]) < 0 then
+      begin
+        RightKey := CurrentExtraRights[I];
+        SeparatorPos := Pos(#1, RightKey);
+        if SeparatorPos > 0 then
+          FUserControl.AddRightEX(FTempIdUser, FUserControl.ApplicationID,
+            Copy(RightKey, 1, SeparatorPos - 1),
+            Copy(RightKey, SeparatorPos + 1, MaxInt));
+      end;
+
+    for I := 0 to FOriginalRights.Count - 1 do
+      if CurrentRights.IndexOf(FOriginalRights[I]) < 0 then
+        DeleteRight(FOriginalRights[I]);
+
+    for I := 0 to FOriginalExtraRights.Count - 1 do
+      if CurrentExtraRights.IndexOf(FOriginalExtraRights[I]) < 0 then
+        DeleteRightEX(FOriginalExtraRights[I]);
+
+    FOriginalRights.Assign(CurrentRights);
+    FOriginalExtraRights.Assign(CurrentExtraRights);
+  finally
+    CurrentExtraRights.Free;
+    CurrentRights.Free;
+  end;
 end;
 
 procedure TUserPermis.TrataItem(IT: TMenuItem; node: TTreeNode);
@@ -821,6 +942,8 @@ procedure TUserPermis.FormShow(Sender: TObject);
 var
   Contador: Integer;
   Selec: Integer;
+  ProfileRights: TStringList;
+  ProfileExtraRights: TStringList;
 begin
   // Adcionado por Luiz
   SetLength(FListaAction, 0);
@@ -830,114 +953,86 @@ begin
   // carrega itens do menu, actions e controles
   CarregaTreeviews;
 
-  // Exibe Permissoes do Usuário
-  for Contador := 0 to TreeAction.Items.Count - 1 do
-  begin
-    DSPermiss.First;
-    if DSPermiss.Locate('ObjName', PTreeAction(TreeAction.Items[Contador].Data)
-      .MenuName, []) then
-      Selec := 1
-    else
-      Selec := 0;
+  if not Assigned(FOriginalRights) then
+    FOriginalRights := CreateRightsIndex;
+  if not Assigned(FOriginalExtraRights) then
+    FOriginalExtraRights := CreateRightsIndex;
 
-    PTreeAction(TreeAction.Items[Contador].Data).Selecionado := Selec;
-    if not PTreeAction(TreeAction.Items[Contador].Data).Grupo then
-    begin
-      TreeAction.Items[Contador].ImageIndex := Selec;
-      TreeAction.Items[Contador].SelectedIndex := Selec;
-    end;
-  end;
+  LoadRightsIndex(DSPermiss, FOriginalRights, False);
+  LoadRightsIndex(DSPermissEX, FOriginalExtraRights, True);
+  ProfileRights := CreateRightsIndex;
+  ProfileExtraRights := CreateRightsIndex;
+  try
+    LoadRightsIndex(DSPerfil, ProfileRights, False);
+    LoadRightsIndex(DSPerfilEX, ProfileExtraRights, True);
 
-  for Contador := 0 to TreeMenu.Items.Count - 1 do
-  begin
-    DSPermiss.First;
-    if DSPermiss.Locate('ObjName', PTreeMenu(TreeMenu.Items[Contador].Data)
-      .MenuName, []) then
-      Selec := 1
-    else
-      Selec := 0;
-
-    PTreeMenu(TreeMenu.Items[Contador].Data).Selecionado := Selec;
-    TreeMenu.Items[Contador].ImageIndex := Selec;
-    TreeMenu.Items[Contador].SelectedIndex := Selec;
-  end;
-
-  // Extra Rights
-  for Contador := 0 to Pred(TreeControls.Items.Count) do
-  begin
-    DSPermissEX.First;
-    if DSPermissEX.Locate('FormName;ObjName',
-      VarArrayOf([PTreeControl(TreeControls.Items[Contador].Data).FormName,
-      PTreeControl(TreeControls.Items[Contador].Data).CompName]), []) then
-      Selec := 1
-    else
-      Selec := 0;
-
-    PTreeControl(TreeControls.Items[Contador].Data).Selecionado := Selec;
-    if not PTreeControl(TreeControls.Items[Contador].Data).Grupo then
-    begin
-      TreeControls.Items[Contador].ImageIndex := Selec;
-      TreeControls.Items[Contador].SelectedIndex := Selec;
-    end;
-  end;
-
-  // Exibe Permissoes do Perfil
-  if Assigned(DSPerfil) and DSPerfil.Active then
-  begin
+    // Exibe permissoes diretas e herdadas do perfil.
     for Contador := 0 to TreeAction.Items.Count - 1 do
     begin
-      DSPerfil.First;
-      if DSPerfil.Locate('ObjName', PTreeAction(TreeAction.Items[Contador].Data)
-        .MenuName, []) then
-      begin
+      if FOriginalRights.IndexOf(
+        PTreeAction(TreeAction.Items[Contador].Data).MenuName) >= 0 then
+        Selec := 1
+      else
+        Selec := 0;
+
+      if ProfileRights.IndexOf(
+        PTreeAction(TreeAction.Items[Contador].Data).MenuName) >= 0 then
         Selec := 2;
-        PTreeAction(TreeAction.Items[Contador].Data).Selecionado := Selec;
-        if not PTreeAction(TreeAction.Items[Contador].Data).Grupo then
-        begin
-          TreeAction.Items[Contador].ImageIndex := Selec;
-          TreeAction.Items[Contador].SelectedIndex := Selec;
-        end;
+
+      PTreeAction(TreeAction.Items[Contador].Data).Selecionado := Selec;
+      if not PTreeAction(TreeAction.Items[Contador].Data).Grupo then
+      begin
+        TreeAction.Items[Contador].ImageIndex := Selec;
+        TreeAction.Items[Contador].SelectedIndex := Selec;
       end;
     end;
 
     for Contador := 0 to TreeMenu.Items.Count - 1 do
     begin
-      DSPerfil.First;
-      if DSPerfil.Locate('ObjName', PTreeMenu(TreeMenu.Items[Contador].Data)
-        .MenuName, []) then
-      begin
+      if FOriginalRights.IndexOf(
+        PTreeMenu(TreeMenu.Items[Contador].Data).MenuName) >= 0 then
+        Selec := 1
+      else
+        Selec := 0;
+
+      if ProfileRights.IndexOf(
+        PTreeMenu(TreeMenu.Items[Contador].Data).MenuName) >= 0 then
         Selec := 2;
-        PTreeMenu(TreeMenu.Items[Contador].Data).Selecionado := Selec;
-        TreeMenu.Items[Contador].ImageIndex := Selec;
-        TreeMenu.Items[Contador].SelectedIndex := Selec;
-      end;
+
+      PTreeMenu(TreeMenu.Items[Contador].Data).Selecionado := Selec;
+      TreeMenu.Items[Contador].ImageIndex := Selec;
+      TreeMenu.Items[Contador].SelectedIndex := Selec;
     end;
 
-  end;
-
-  // Extra Rights do perfil
-  if Assigned(DSPerfilEX) and DSPerfilEX.Active then
-  begin
     for Contador := 0 to Pred(TreeControls.Items.Count) do
     begin
-      DSPerfilEX.First;
-      if DSPerfilEX.Locate('FormName;ObjName',
-        VarArrayOf([PTreeControl(TreeControls.Items[Contador].Data).FormName,
-        PTreeControl(TreeControls.Items[Contador].Data).CompName]), []) then
-      begin
+      if FOriginalExtraRights.IndexOf(ExtraRightKey(
+        PTreeControl(TreeControls.Items[Contador].Data).FormName,
+        PTreeControl(TreeControls.Items[Contador].Data).CompName)) >= 0 then
+        Selec := 1
+      else
+        Selec := 0;
+
+      if ProfileExtraRights.IndexOf(ExtraRightKey(
+        PTreeControl(TreeControls.Items[Contador].Data).FormName,
+        PTreeControl(TreeControls.Items[Contador].Data).CompName)) >= 0 then
         Selec := 2;
-        PTreeControl(TreeControls.Items[Contador].Data).Selecionado := Selec;
-        if not PTreeControl(TreeControls.Items[Contador].Data).Grupo then
-        begin
-          TreeControls.Items[Contador].ImageIndex := Selec;
-          TreeControls.Items[Contador].SelectedIndex := Selec;
-        end;
+
+      PTreeControl(TreeControls.Items[Contador].Data).Selecionado := Selec;
+      if not PTreeControl(TreeControls.Items[Contador].Data).Grupo then
+      begin
+        TreeControls.Items[Contador].ImageIndex := Selec;
+        TreeControls.Items[Contador].SelectedIndex := Selec;
       end;
     end;
+  finally
+    ProfileExtraRights.Free;
+    ProfileRights.Free;
   end;
 
   TreeAction.Repaint;
   TreeMenu.Repaint;
+  TreeControls.Repaint;
   FChangingTree := False;
   PC.ActivePageIndex := 1;
   FSearchIndex := -1;
@@ -1213,6 +1308,9 @@ begin
 
   if Assigned(FTempLista) then
     FreeAndNil(FTempLista);
+
+  FreeAndNil(FOriginalRights);
+  FreeAndNil(FOriginalExtraRights);
 
   for Contador := 0 to High(FListaMenu) do
     Dispose(FListaMenu[Contador]);

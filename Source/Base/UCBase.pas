@@ -484,7 +484,7 @@ type
     procedure SetfLanguage(const Value: TUCLanguage);
     procedure SetFMailUserControl(const Value: TMailUserControl);
     procedure ActionEsqueceuSenha(Sender: TObject);
-    procedure SaveUserImage(IdUser: Integer; const Image: String);
+    procedure SaveUserImage(IdUser: Integer; const Image: TBytes);
   protected
     FRetry: Integer;
     // Formulários
@@ -535,7 +535,7 @@ type
     procedure StartLogin;
     procedure ShowChangePassword;
     procedure ChangeUser(IdUser: Integer; Login, Name, Mail: String; Profile, UserExpired, UserDaysSun, Status: Integer;
-      Privuser: Boolean; const Image: string; ImageChanged: Boolean = True);
+      Privuser: Boolean; const Image: TBytes; ImageChanged: Boolean = True);
     procedure ChangePassword(IdUser: Integer; NewPassword: String);
     procedure AddRight(IdUser: Integer; ItemRight: TObject; FullPath: Boolean = True); overload;
     procedure AddRight(IdUser: Integer; ItemRight: String); overload;
@@ -547,7 +547,7 @@ type
     function GetLocalUserName: String;
     function GetLocalComputerName: String;
     function AddUser(Login, Password, Name, Mail: String; Profile, UserExpired, DaysExpired: Integer; Privuser: Boolean;
-      const Image: string): Integer;
+      const Image: TBytes): Integer;
     function ExisteUsuario(Login: String): Boolean;
     property CurrentUser: TUCCurrentUser read FCurrentUser write FCurrentUser;
     property UserSettings: TUCUserSettings read FUserSettings write SetUserSettings;
@@ -1551,7 +1551,7 @@ begin
 end;
 
 function TUserControl.AddUser(Login, Password, Name, Mail: String; Profile, UserExpired, DaysExpired: Integer;
-  Privuser: Boolean; const Image: string): Integer;
+  Privuser: Boolean; const Image: TBytes): Integer;
 var
   Key: String;
   SQLstmt: String;
@@ -1624,7 +1624,7 @@ begin
   if Assigned(DataConnector) then
     DataConnector.UCExecSQL(SQLstmt);
 
-  if Image <> '' then
+  if Length(Image) > 0 then
     SaveUserImage(Result, Image);
 
   if Assigned(OnAddUser) then
@@ -1701,7 +1701,7 @@ end;
 
 procedure TUserControl.ChangeUser(IdUser: Integer; Login, Name, Mail: String;
   Profile, UserExpired, UserDaysSun, Status: Integer; Privuser: Boolean;
-  const Image: string; ImageChanged: Boolean);
+  const Image: TBytes; ImageChanged: Boolean);
 var
   Key: String;
   Password: String;
@@ -1766,25 +1766,17 @@ begin
     OnChangeUser(Self, IdUser, Login, Name, Mail, Profile, Privuser);
 end;
 
-procedure TUserControl.SaveUserImage(IdUser: Integer; const Image: String);
-var
-  SQLValue: String;
+procedure TUserControl.SaveUserImage(IdUser: Integer; const Image: TBytes);
 begin
   if not Assigned(DataConnector) then
     Exit;
 
-  if DataConnector.UCUpdateTextField(TableUsers.TableName,
+  if DataConnector.UCUpdateBinaryField(TableUsers.TableName,
     TableUsers.FieldUserID, IdUser, TableUsers.FieldImage, Image) then
     Exit;
 
-  if Image = '' then
-    SQLValue := 'NULL'
-  else
-    SQLValue := QuotedStr(StringReplace(Image, '''', '''''''', [rfReplaceAll]));
-
-  DataConnector.UCExecSQL(Format('update %s set %s = %s where %s = %d', [
-    TableUsers.TableName, TableUsers.FieldImage, SQLValue,
-    TableUsers.FieldUserID, IdUser]));
+  raise EDatabaseError.Create(
+    'O conector do UserControl nao suporta gravacao de campos BLOB binarios');
 end;
 
 procedure TUserControl.CheckBD;
@@ -2925,7 +2917,7 @@ begin
     if DataSetUsuario.IsEmpty then
       IDUsuario := AddUser(UsuarioInicial, PasswordInicial,
         Login.InitialLogin.User, Login.InitialLogin.Email, 0, 0,
-        Login.DaysOfSunExpired, True, '')
+        Login.DaysOfSunExpired, True, nil)
     else
       IDUsuario := DataSetUsuario.FieldByName('idUser').AsInteger;
 

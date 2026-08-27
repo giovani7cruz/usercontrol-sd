@@ -31,12 +31,17 @@ type
     procedure RefreshDataSet(DataSet: TDataSet);
   end;
 
-  { Optional extension for values that should not be embedded in SQL text,
-    such as Base64 images sent through REST/RPC transports. }
-  IUCDataConnectionTextFieldWriter = interface
-    ['{CFB52B39-8E4B-43E8-B88E-17F97F9FE07D}']
-    procedure UpdateTextField(const TableName, KeyField: string;
-      KeyValue: Int64; const FieldName, Value: string);
+  { Optional extensions for binary BLOBs transported outside SQL text. }
+  IUCDataConnectionBinaryFieldWriter = interface
+    ['{227A1341-7C02-44AE-AD6F-0C3DD25EC09C}']
+    procedure UpdateBinaryField(const TableName, KeyField: string;
+      KeyValue: Int64; const FieldName: string; const Value: TBytes);
+  end;
+
+  IUCDataConnectionBinaryFieldReader = interface
+    ['{45AFF448-726E-4E63-B385-A32225044FE7}']
+    function ReadBinaryField(const TableName, KeyField: string;
+      KeyValue: Int64; const FieldName: string): TBytes;
   end;
 
   { Runtime adapter. It deliberately has no Register procedure, so installing a
@@ -54,8 +59,11 @@ type
     function GetDBObjectName: String; override;
     function GetTransObjectName: String; override;
     procedure RefreshDataSet(DataSet: TDataSet); override;
-    function UCUpdateTextField(const TableName, KeyField: String;
-      KeyValue: Int64; const FieldName, Value: String): Boolean; override;
+    function UCReadBinaryField(const TableName, KeyField: String;
+      KeyValue: Int64; const FieldName: String): TBytes; override;
+    function UCUpdateBinaryField(const TableName, KeyField: String;
+      KeyValue: Int64; const FieldName: String;
+      const Value: TBytes): Boolean; override;
 
     property Connection: IUCDataConnection read FConnection write FConnection;
   end;
@@ -121,16 +129,28 @@ begin
   Result := RequireConnection.TransactionObjectName;
 end;
 
-function TUCConnectionAdapter.UCUpdateTextField(const TableName,
-  KeyField: String; KeyValue: Int64; const FieldName,
-  Value: String): Boolean;
+function TUCConnectionAdapter.UCReadBinaryField(const TableName,
+  KeyField: String; KeyValue: Int64; const FieldName: String): TBytes;
 var
-  Writer: IUCDataConnectionTextFieldWriter;
+  Reader: IUCDataConnectionBinaryFieldReader;
 begin
-  Result := Supports(RequireConnection, IUCDataConnectionTextFieldWriter,
+  if Supports(RequireConnection, IUCDataConnectionBinaryFieldReader, Reader) then
+    Result := Reader.ReadBinaryField(TableName, KeyField, KeyValue, FieldName)
+  else
+    Result := inherited UCReadBinaryField(TableName, KeyField, KeyValue,
+      FieldName);
+end;
+
+function TUCConnectionAdapter.UCUpdateBinaryField(const TableName,
+  KeyField: String; KeyValue: Int64; const FieldName: String;
+  const Value: TBytes): Boolean;
+var
+  Writer: IUCDataConnectionBinaryFieldWriter;
+begin
+  Result := Supports(RequireConnection, IUCDataConnectionBinaryFieldWriter,
     Writer);
   if Result then
-    Writer.UpdateTextField(TableName, KeyField, KeyValue, FieldName, Value);
+    Writer.UpdateBinaryField(TableName, KeyField, KeyValue, FieldName, Value);
 end;
 
 end.

@@ -183,7 +183,7 @@ begin
       ' select ' +
       '   %s as IdUser, %s as Login, %s as Nome, %s as Email, ' +
       '   %s as Perfil, %s as Privilegiado, %s as Tipo, %s as Senha, ' +
-      '   %s as UserNaoExpira, %s as DaysOfExpire , %s as UserInative, %s as Image ' +
+      '   %s as UserNaoExpira, %s as DaysOfExpire , %s as UserInative ' +
       ' from ' +
       '   %s ' +
       ' where ' +
@@ -193,7 +193,7 @@ begin
       [
         FUsercontrol.TableUsers.FieldUserID, FUsercontrol.TableUsers.FieldLogin, FUsercontrol.TableUsers.FieldUserName, FUsercontrol.TableUsers.FieldEmail,
         FUsercontrol.TableUsers.FieldProfile, FUsercontrol.TableUsers.FieldPrivileged, FUsercontrol.TableUsers.FieldTypeRec, FUsercontrol.TableUsers.FieldPassword,
-        FUsercontrol.TableUsers.FieldUserExpired, FUsercontrol.TableUsers.FieldUserDaysSun, FUsercontrol.TableUsers.FieldUserInative, FUsercontrol.TableUsers.FieldImage,
+        FUsercontrol.TableUsers.FieldUserExpired, FUsercontrol.TableUsers.FieldUserDaysSun, FUsercontrol.TableUsers.FieldUserInative,
         FUsercontrol.TableUsers.TableName,
         FUsercontrol.TableUsers.FieldTypeRec, QuotedStr('U'),
         FUsercontrol.TableUsers.FieldLogin
