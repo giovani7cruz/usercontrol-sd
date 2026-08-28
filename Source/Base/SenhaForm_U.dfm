@@ -4,13 +4,13 @@ object SenhaForm: TSenhaForm
   ActiveControl = edtSenha
   BorderStyle = bsDialog
   Caption = 'Digitar Senha...'
-  ClientHeight = 145
-  ClientWidth = 244
+  ClientHeight = 184
+  ClientWidth = 360
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
-  Font.Name = 'Tahoma'
+  Font.Name = 'Segoe UI'
   Font.Style = []
   OldCreateOrder = False
   Position = poMainFormCenter
@@ -22,23 +22,24 @@ object SenhaForm: TSenhaForm
   TextHeight = 13
   object LabelSenha: TLabel
     Left = 16
-    Top = 7
+    Top = 12
     Width = 30
     Height = 13
     Caption = 'Senha'
   end
   object LabelConfirma: TLabel
     Left = 16
-    Top = 51
+    Top = 66
     Width = 30
     Height = 13
     Caption = 'Senha'
   end
   object edtSenha: TEdit
     Left = 16
-    Top = 23
-    Width = 217
+    Top = 31
+    Width = 328
     Height = 21
+    Anchors = [akLeft, akTop, akRight]
     Ctl3D = True
     ParentCtl3D = False
     PasswordChar = '*'
@@ -46,19 +47,21 @@ object SenhaForm: TSenhaForm
   end
   object edtConfirmaSenha: TEdit
     Left = 16
-    Top = 67
-    Width = 217
+    Top = 85
+    Width = 328
     Height = 21
+    Anchors = [akLeft, akTop, akRight]
     Ctl3D = True
     ParentCtl3D = False
     PasswordChar = '*'
     TabOrder = 1
   end
   object btnOK: TBitBtn
-    Left = 47
-    Top = 108
+    Left = 168
+    Top = 137
     Width = 75
     Height = 25
+    Anchors = [akRight, akBottom]
     Caption = 'OK'
     Default = True
     ModalResult = 1
@@ -83,10 +86,11 @@ object SenhaForm: TSenhaForm
     NumGlyphs = 2
   end
   object BtCancel: TBitBtn
-    Left = 121
-    Top = 108
+    Left = 264
+    Top = 137
     Width = 75
     Height = 25
+    Anchors = [akRight, akBottom]
     Cancel = True
     Caption = 'Cancel'
     ModalResult = 2

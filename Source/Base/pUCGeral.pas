@@ -104,7 +104,9 @@ type
     SpeedLog: TSpeedButton;
     SpeedUserLog: TSpeedButton;
     SBSair: TSpeedButton;
+    procedure FormCreate(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
     procedure SpeedUserClick(Sender: TObject);
     procedure SpeedPerfilClick(Sender: TObject);
@@ -116,6 +118,8 @@ type
   protected
     FrmFrame: TCustomFrame;
   private
+    procedure ApplyVisualStyle;
+    procedure AttachFrame(AFrame: TCustomFrame);
     procedure GetUser;
     procedure GetGroup;
   public
@@ -133,7 +137,8 @@ uses
   pUcFrame_Profile,
   pUcFrame_User,
   pUcFrame_UserLogged,
-  UCMessages;
+  UCMessages,
+  UCVisualStyle;
 
 {$IFDEF FPC}
 {$R *.lfm}
@@ -141,9 +146,51 @@ uses
 {$R *.dfm}
 {$ENDIF}
 
+procedure TFormUserPerf.ApplyVisualStyle;
+var
+  I: Integer;
+  Button: TSpeedButton;
+begin
+  TUCVisualStyle.ApplyForm(Self);
+  TUCVisualStyle.StyleHeader(Panel1, LbDescricao);
+  TUCVisualStyle.StyleActionPanel(Panel2);
+  TUCVisualStyle.StyleActionPanel(Panel3);
+
+  for I := 0 to Panel2.ControlCount - 1 do
+    if Panel2.Controls[I] is TSpeedButton then
+    begin
+      Button := TSpeedButton(Panel2.Controls[I]);
+      Button.Flat := True;
+      Button.Font.Name := TUCVisualStyle.DefaultFontName;
+      Button.Font.Size := TUCVisualStyle.DefaultFontSize;
+      Button.Cursor := crHandPoint;
+    end;
+end;
+
+procedure TFormUserPerf.AttachFrame(AFrame: TCustomFrame);
+begin
+  AFrame.Parent := Panel3;
+  AFrame.Align := alClient;
+end;
+
 procedure TFormUserPerf.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Self.Release;
+end;
+
+procedure TFormUserPerf.FormCreate(Sender: TObject);
+begin
+  ApplyVisualStyle;
+end;
+
+procedure TFormUserPerf.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Key = VK_ESCAPE then
+  begin
+    Key := 0;
+    Close;
+  end;
 end;
 
 procedure TFormUserPerf.FormShow(Sender: TObject);
@@ -219,9 +266,8 @@ begin
   GetGroup;
 
   FrmFrame := TFrame_Profile.Create(Self);
+  AttachFrame(FrmFrame);
   TFrame_Profile(FrmFrame).DataPerfil.DataSet := FUsercontrol.CurrentUser.PerfilGrupo;
-  TFrame_Profile(FrmFrame).Height := Panel3.Height;
-  TFrame_Profile(FrmFrame).Width := Panel3.Width;
   TFrame_Profile(FrmFrame).FDataSetPerfilUsuario := FUsercontrol.CurrentUser.PerfilGrupo;
   TFrame_Profile(FrmFrame).FUsercontrol := FUsercontrol;
   TFrame_Profile(FrmFrame).DbGridPerf.Columns[0].Title.Caption := FUsercontrol.UserSettings.UsersProfile.ColProfile;
@@ -234,7 +280,7 @@ begin
     BtnExcPer.Caption := BtDelete;
     BtnAcePer.Caption := BtRights;
   end;
-  FrmFrame.Parent := Panel3;
+  TFrame_Profile(FrmFrame).ApplyVisualStyle;
 
 end;
 
@@ -250,16 +296,14 @@ begin
   GetGroup;
 
   FrmFrame := TUCFrame_User.Create(Self);
+  AttachFrame(FrmFrame);
   TUCFrame_User(FrmFrame).FDataSetCadastroUsuario := FUsercontrol.CurrentUser.PerfilUsuario;
   TUCFrame_User(FrmFrame).DataUser.DataSet := TUCFrame_User(FrmFrame).FDataSetCadastroUsuario;
   TUCFrame_User(FrmFrame).DataPerfil.DataSet := FUsercontrol.CurrentUser.PerfilGrupo;
   TUCFrame_User(FrmFrame).FUsercontrol := FUsercontrol;
-  TUCFrame_User(FrmFrame).Height := Panel3.Height;
-  TUCFrame_User(FrmFrame).Width := Panel3.Width;
   TUCFrame_User(FrmFrame).SetWindow;
   LbDescricao.Caption := FUsercontrol.UserSettings.UsersForm.LabelDescription;
 
-  FrmFrame.Parent := Panel3;
 end;
 
 procedure TFormUserPerf.SpeedUserLogClick(Sender: TObject);
@@ -271,12 +315,10 @@ begin
     FreeAndNil(FrmFrame);
 
   FrmFrame := TUCFrame_UsersLogged.Create(Self);
+  AttachFrame(FrmFrame);
   LbDescricao.Caption := FUsercontrol.UserSettings.UsersLogged.LabelDescricao;
   TUCFrame_UsersLogged(FrmFrame).FUsercontrol := FUsercontrol;
   TUCFrame_UsersLogged(FrmFrame).SetWindow;
-  TUCFrame_UsersLogged(FrmFrame).Height := Panel3.Height;
-  TUCFrame_UsersLogged(FrmFrame).Width := Panel3.Width;
-  FrmFrame.Parent := Panel3;
 end;
 
 procedure TFormUserPerf.SpeedUserMouseEnter(Sender: TObject);
@@ -311,12 +353,10 @@ begin
     FreeAndNil(FrmFrame);
 
   FrmFrame := TUCFrame_Log.Create(Self);
+  AttachFrame(FrmFrame);
   LbDescricao.Caption := FUsercontrol.UserSettings.Log.LabelDescription;
   TUCFrame_Log(FrmFrame).FUsercontrol := FUsercontrol;
   TUCFrame_Log(FrmFrame).SetWindow;
-  TUCFrame_Log(FrmFrame).Height := Panel3.Height;
-  TUCFrame_Log(FrmFrame).Width := Panel3.Width;
-  FrmFrame.Parent := Panel3;
 
 end;
 

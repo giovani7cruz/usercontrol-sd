@@ -91,7 +91,8 @@ uses
   Windows,
   {$ENDIF}
 
-  UCBase;
+  UCBase,
+  UCVisualStyle;
 
 type
   TfrmIncluirPerfil = class(TForm)
@@ -109,6 +110,7 @@ type
     procedure btGravarClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure FormCreate(Sender: TObject);
   private
     IDPerfilNovo: Integer;
     PerfilDs: TDataset;
@@ -131,6 +133,19 @@ implementation
 {$ELSE}
 {$R *.dfm}
 {$ENDIF}
+
+procedure TfrmIncluirPerfil.FormCreate(Sender: TObject);
+begin
+  TUCVisualStyle.ApplyForm(Self);
+  TUCVisualStyle.StyleHeader(PanelTitulo, LbDescricao);
+  TUCVisualStyle.StyleActionPanel(PanelButao);
+  TUCVisualStyle.StyleActionPanel(PanelAddPerfil);
+  TUCVisualStyle.StyleEdit(EditDescricao);
+  TUCVisualStyle.StylePrimaryButton(btGravar);
+  TUCVisualStyle.StyleSecondaryButton(btCancela);
+  ComboBoxPerfil.Font.Assign(EditDescricao.Font);
+  ComboBoxPerfil.Height := TUCVisualStyle.FieldHeight;
+end;
 
 procedure TfrmIncluirPerfil.AlteraPerfil;
 begin
@@ -252,6 +267,10 @@ procedure TfrmIncluirPerfil.FormShow(Sender: TObject);
 var
   I: Integer;
 begin
+  TUCVisualStyle.FitButtonWidth(btGravar, 100);
+  TUCVisualStyle.FitButtonWidth(btCancela, 100);
+  btCancela.Left := PanelButao.ClientWidth - btCancela.Width - 12;
+  btGravar.Left := btCancela.Left - btGravar.Width - 8;
   if LbDescricao.Caption = 'Selecione o Perfil para Copiar'
   then { By Cleilson Sousa }
   begin

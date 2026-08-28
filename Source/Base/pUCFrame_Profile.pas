@@ -104,6 +104,7 @@ uses
 
   IncPerfil_U,
   UcBase,
+  UCVisualStyle,
   UserPermis_U,
   pUCGeral;
 
@@ -122,6 +123,7 @@ type
     procedure BtnExcPerClick(Sender: TObject);
     procedure BtnAcePerClick(Sender: TObject);
     procedure BtnCopiaPerClick(Sender: TObject);
+    procedure FrameResize(Sender: TObject);
   protected
     FIncluirPerfil: TfrmIncluirPerfil;
     procedure ActionBtPermissProfileDefault;
@@ -134,6 +136,7 @@ type
     { Public declarations }
     fUserControl: TUserControl;
     FDataSetPerfilUsuario: TDataset;
+    procedure ApplyVisualStyle;
     destructor Destroy; override;
   end;
 
@@ -144,6 +147,43 @@ implementation
 {$ELSE}
 {$R *.dfm}
 {$ENDIF}
+
+procedure TFrame_Profile.ApplyVisualStyle;
+var
+  I: Integer;
+begin
+  TUCVisualStyle.ApplyFrame(Self);
+  TUCVisualStyle.StyleActionPanel(Panel2);
+  TUCVisualStyle.StyleGrid(DbGridPerf);
+
+  for I := 0 to Panel2.ControlCount - 1 do
+    if Panel2.Controls[I] is TBitBtn then
+    begin
+      TUCVisualStyle.StyleActionButton(TBitBtn(Panel2.Controls[I]));
+      TUCVisualStyle.FitButtonWidth(TBitBtn(Panel2.Controls[I]), 96);
+    end;
+
+  BtnAddPer.Left := 8;
+  BtnCopiaPer.Left := BtnAddPer.Left + BtnAddPer.Width + 8;
+  BtnAltPer.Left := BtnCopiaPer.Left + BtnCopiaPer.Width + 8;
+  BtnExcPer.Left := BtnAltPer.Left + BtnAltPer.Width + 8;
+  BtnAcePer.Left := BtnExcPer.Left + BtnExcPer.Width + 8;
+
+  FrameResize(Self);
+end;
+
+procedure TFrame_Profile.FrameResize(Sender: TObject);
+var
+  AvailableWidth: Integer;
+begin
+  if DbGridPerf.Columns.Count = 0 then
+    Exit;
+
+  AvailableWidth := DbGridPerf.ClientWidth - 28;
+  if AvailableWidth < 120 then
+    AvailableWidth := 120;
+  DbGridPerf.Columns[0].Width := AvailableWidth;
+end;
 
 procedure TFrame_Profile.SetWindowPerfil(Adicionar: Boolean);
 begin

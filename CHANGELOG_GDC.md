@@ -126,6 +126,12 @@
   remoto da aplicacao correspondente.
 - A tela trata com seguranca a ausencia do formulario principal, de dataset ou
   de registro selecionado e mantem o estado dos botoes sincronizado com a grade.
+- O formulario principal de administracao passa a ser redimensionavel e encaixa
+  os frames com `Align = alClient`, evitando tamanhos fixos em DPI elevado.
+- A navegacao lateral, a lista e o editor de perfis adotam o estilo visual comum,
+  com grade responsiva e acoes organizadas horizontalmente.
+- Os dialogos de definicao e troca de senha adotam fonte, campos e rodape de
+  acoes consistentes, preservando Enter, Esc e a troca obrigatoria de senha.
 
 ### Segurança
 

@@ -4,32 +4,33 @@ object TrocaSenha: TTrocaSenha
   ActiveControl = EditAtu
   BorderStyle = bsDialog
   Caption = 'Seguran'#231'a'
-  ClientHeight = 163
-  ClientWidth = 353
+  ClientHeight = 222
+  ClientWidth = 440
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
-  Font.Name = 'MS Sans Serif'
+  Font.Name = 'Segoe UI'
   Font.Style = []
   OldCreateOrder = False
   OnActivate = FormActivate
   OnClose = FormClose
   OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 353
-    Height = 35
+    Width = 440
+    Height = 44
     Align = alTop
     BevelOuter = bvNone
     Color = clWhite
     TabOrder = 0
     object lbDescricao: TLabel
       Left = 47
-      Top = 11
+      Top = 13
       Width = 124
       Height = 18
       Caption = 'Trocar Senha '
@@ -151,18 +152,19 @@ object TrocaSenha: TTrocaSenha
     end
   end
   object Panel3: TPanel
-    Left = 256
-    Top = 35
-    Width = 97
-    Height = 128
-    Align = alRight
+    Left = 0
+    Top = 170
+    Width = 440
+    Height = 52
+    Align = alBottom
     BevelOuter = bvNone
     TabOrder = 1
     object btGrava: TBitBtn
-      Left = 8
-      Top = 32
+      Left = 226
+      Top = 10
       Width = 81
       Height = 25
+      Anchors = [akTop, akRight]
       Caption = '&Gravar'
       TabOrder = 0
       Glyph.Data = {
@@ -219,10 +221,11 @@ object TrocaSenha: TTrocaSenha
       NumGlyphs = 2
     end
     object btCancel: TBitBtn
-      Left = 8
-      Top = 72
+      Left = 330
+      Top = 10
       Width = 81
       Height = 25
+      Anchors = [akTop, akRight]
       Caption = '&Cancelar'
       TabOrder = 1
       OnClick = btCancelClick
@@ -259,42 +262,42 @@ object TrocaSenha: TTrocaSenha
   end
   object Panel2: TPanel
     Left = 0
-    Top = 35
-    Width = 256
-    Height = 128
+    Top = 44
+    Width = 440
+    Height = 126
     Align = alClient
-    BevelInner = bvRaised
-    BevelOuter = bvLowered
+    BevelOuter = bvNone
     TabOrder = 2
     object lbSenhaAtu: TLabel
-      Left = 34
-      Top = 27
+      Left = 24
+      Top = 22
       Width = 64
       Height = 13
       Alignment = taRightJustify
       Caption = 'Senha Atual :'
     end
     object lbNovaSenha: TLabel
-      Left = 32
-      Top = 57
+      Left = 24
+      Top = 56
       Width = 66
       Height = 13
       Alignment = taRightJustify
       Caption = 'Nova Senha :'
     end
     object lbConfirma: TLabel
-      Left = 51
-      Top = 88
+      Left = 24
+      Top = 90
       Width = 47
       Height = 13
       Alignment = taRightJustify
       Caption = 'Confirma :'
     end
     object EditAtu: TEdit
-      Left = 103
-      Top = 24
-      Width = 121
+      Left = 140
+      Top = 18
+      Width = 276
       Height = 21
+      Anchors = [akLeft, akTop, akRight]
       Ctl3D = True
       MaxLength = 10
       ParentCtl3D = False
@@ -302,10 +305,11 @@ object TrocaSenha: TTrocaSenha
       TabOrder = 0
     end
     object EditNova: TEdit
-      Left = 103
-      Top = 54
-      Width = 121
+      Left = 140
+      Top = 52
+      Width = 276
       Height = 21
+      Anchors = [akLeft, akTop, akRight]
       Ctl3D = True
       MaxLength = 10
       ParentCtl3D = False
@@ -313,10 +317,11 @@ object TrocaSenha: TTrocaSenha
       TabOrder = 1
     end
     object EditConfirma: TEdit
-      Left = 103
-      Top = 85
-      Width = 121
+      Left = 140
+      Top = 86
+      Width = 276
       Height = 21
+      Anchors = [akLeft, akTop, akRight]
       Ctl3D = True
       MaxLength = 10
       ParentCtl3D = False

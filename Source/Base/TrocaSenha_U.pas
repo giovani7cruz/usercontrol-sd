@@ -93,7 +93,8 @@ uses
   Windows,
   {$ENDIF}
 
-  UCBase; { Por Vicente Barros Leonel }
+  UCBase,
+  UCVisualStyle; { Por Vicente Barros Leonel }
 
 type
   TTrocaSenha = class(TForm)
@@ -114,6 +115,7 @@ type
     procedure btCancelClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
   public
@@ -130,6 +132,19 @@ implementation
 {$R *.dfm}
 {$ENDIF}
 
+procedure TTrocaSenha.FormCreate(Sender: TObject);
+begin
+  TUCVisualStyle.ApplyForm(Self);
+  TUCVisualStyle.StyleHeader(Panel1, lbDescricao);
+  TUCVisualStyle.StyleActionPanel(Panel2);
+  TUCVisualStyle.StyleActionPanel(Panel3);
+  TUCVisualStyle.StyleEdit(EditAtu);
+  TUCVisualStyle.StyleEdit(EditNova);
+  TUCVisualStyle.StyleEdit(EditConfirma);
+  TUCVisualStyle.StylePrimaryButton(btGrava);
+  TUCVisualStyle.StyleSecondaryButton(btCancel);
+end;
+
 procedure TTrocaSenha.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Action := caFree;
@@ -145,6 +160,10 @@ begin
   EditAtu.CharCase := Self.fUsercontrol.Login.CharCasePass;
   EditNova.CharCase := Self.fUsercontrol.Login.CharCasePass;
   EditConfirma.CharCase := Self.fUsercontrol.Login.CharCasePass;
+  TUCVisualStyle.FitButtonWidth(btGrava, 100);
+  TUCVisualStyle.FitButtonWidth(btCancel, 100);
+  btCancel.Left := Panel3.ClientWidth - btCancel.Width - 12;
+  btGrava.Left := btCancel.Left - btGrava.Width - 8;
   { Por Vicente Barros Leonel }
 end;
 

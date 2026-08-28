@@ -3,16 +3,17 @@ object frmIncluirPerfil: TfrmIncluirPerfil
   Top = 319
   BorderStyle = bsDialog
   Caption = 'Perfil de Usu'#225'rios'
-  ClientHeight = 130
+  ClientHeight = 160
   ClientWidth = 430
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
-  Font.Name = 'MS Sans Serif'
+  Font.Name = 'Segoe UI'
   Font.Style = []
   OldCreateOrder = False
   OnClose = FormClose
+  OnCreate = FormCreate
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -149,18 +150,19 @@ object frmIncluirPerfil: TfrmIncluirPerfil
     end
   end
   object PanelButao: TPanel
-    Left = 333
-    Top = 35
-    Width = 97
-    Height = 95
-    Align = alRight
+    Left = 0
+    Top = 108
+    Width = 430
+    Height = 52
+    Align = alBottom
     BevelOuter = bvNone
     TabOrder = 2
     object btGravar: TBitBtn
-      Left = 8
-      Top = 17
+      Left = 214
+      Top = 10
       Width = 81
       Height = 25
+      Anchors = [akTop, akRight]
       Caption = '&Gravar'
       TabOrder = 0
       OnClick = btGravarClick
@@ -218,10 +220,11 @@ object frmIncluirPerfil: TfrmIncluirPerfil
       NumGlyphs = 2
     end
     object btCancela: TBitBtn
-      Left = 8
-      Top = 57
+      Left = 318
+      Top = 10
       Width = 81
       Height = 25
+      Anchors = [akTop, akRight]
       Caption = '&Cancelar'
       TabOrder = 1
       OnClick = btCancelaClick
@@ -259,24 +262,24 @@ object frmIncluirPerfil: TfrmIncluirPerfil
   object PanelAddPerfil: TPanel
     Left = 0
     Top = 35
-    Width = 333
-    Height = 95
+    Width = 430
+    Height = 73
     Align = alClient
-    BevelInner = bvRaised
-    BevelOuter = bvLowered
+    BevelOuter = bvNone
     TabOrder = 0
     object lbNome: TLabel
       Left = 16
-      Top = 40
+      Top = 27
       Width = 34
       Height = 13
       Caption = 'Nome :'
     end
     object EditDescricao: TEdit
       Left = 56
-      Top = 37
-      Width = 249
+      Top = 24
+      Width = 346
       Height = 21
+      Anchors = [akLeft, akTop, akRight]
       Ctl3D = True
       MaxLength = 30
       ParentCtl3D = False
@@ -284,9 +287,10 @@ object frmIncluirPerfil: TfrmIncluirPerfil
     end
     object ComboBoxPerfil: TComboBox
       Left = 56
-      Top = 37
-      Width = 249
+      Top = 24
+      Width = 346
       Height = 21
+      Anchors = [akLeft, akTop, akRight]
       Style = csDropDownList
       ItemHeight = 13
       TabOrder = 1

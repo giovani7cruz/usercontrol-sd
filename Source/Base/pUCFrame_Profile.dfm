@@ -4,14 +4,15 @@ object Frame_Profile: TFrame_Profile
   Width = 697
   Height = 554
   Anchors = [akLeft, akTop, akRight, akBottom]
-  AutoSize = True
   TabOrder = 0
   TabStop = True
+  OnResize = FrameResize
   object DbGridPerf: TDBGrid
     Left = 0
     Top = 0
     Width = 601
     Height = 554
+    Align = alClient
     Ctl3D = True
     DataSource = DataPerfil
     Options = [dgTitles, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit]
@@ -35,15 +36,16 @@ object Frame_Profile: TFrame_Profile
       end>
   end
   object Panel2: TPanel
-    Left = 599
+    Left = 0
     Top = 0
-    Width = 98
-    Height = 554
+    Width = 697
+    Height = 48
+    Align = alTop
     BevelOuter = bvNone
     TabOrder = 1
     object BtnAddPer: TBitBtn
       Left = 7
-      Top = 10
+      Top = 8
       Width = 81
       Height = 25
       Cursor = crHandPoint
@@ -105,7 +107,7 @@ object Frame_Profile: TFrame_Profile
     end
     object BtnAltPer: TBitBtn
       Left = 7
-      Top = 72
+      Top = 8
       Width = 81
       Height = 25
       Cursor = crHandPoint
@@ -167,7 +169,7 @@ object Frame_Profile: TFrame_Profile
     end
     object BtnExcPer: TBitBtn
       Left = 7
-      Top = 103
+      Top = 8
       Width = 81
       Height = 25
       Cursor = crHandPoint
@@ -229,7 +231,7 @@ object Frame_Profile: TFrame_Profile
     end
     object BtnAcePer: TBitBtn
       Left = 7
-      Top = 134
+      Top = 8
       Width = 81
       Height = 25
       Cursor = crHandPoint
@@ -291,7 +293,7 @@ object Frame_Profile: TFrame_Profile
     end
     object BtnCopiaPer: TBitBtn
       Left = 7
-      Top = 41
+      Top = 8
       Width = 81
       Height = 25
       Cursor = crHandPoint

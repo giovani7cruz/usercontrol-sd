@@ -95,7 +95,8 @@ uses
   System.UITypes,
   {$ENDIF}
 
-  UCBase;
+  UCBase,
+  UCVisualStyle;
 
 type
   TSenhaForm = class(TForm)
@@ -169,6 +170,11 @@ end;
 
 procedure TSenhaForm.FormCreate(Sender: TObject);
 begin
+  TUCVisualStyle.ApplyForm(Self);
+  TUCVisualStyle.StyleEdit(edtSenha);
+  TUCVisualStyle.StyleEdit(edtConfirmaSenha);
+  TUCVisualStyle.StylePrimaryButton(btnOK);
+  TUCVisualStyle.StyleSecondaryButton(BtCancel);
   edtSenha.Clear;
   edtConfirmaSenha.Clear;
 end;
@@ -182,6 +188,10 @@ begin
     LabelConfirm;
   btnOK.Caption := fUserControl.UserSettings.Login.BtOk;
   BtCancel.Caption := fUserControl.UserSettings.Login.BtCancel;
+  TUCVisualStyle.FitButtonWidth(btnOK, 88);
+  TUCVisualStyle.FitButtonWidth(BtCancel, 88);
+  BtCancel.Left := ClientWidth - BtCancel.Width - 12;
+  btnOK.Left := BtCancel.Left - btnOK.Width - 8;
 end;
 
 end.

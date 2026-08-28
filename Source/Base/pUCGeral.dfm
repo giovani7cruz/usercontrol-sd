@@ -1,8 +1,8 @@
 object FormUserPerf: TFormUserPerf
   Left = 355
   Top = 126
-  BorderIcons = [biSystemMenu, biMinimize]
-  BorderStyle = bsSingle
+  BorderIcons = [biSystemMenu, biMinimize, biMaximize]
+  BorderStyle = bsSizeable
   Caption = 'Controle de Usu'#225'rios'
   ClientHeight = 597
   ClientWidth = 798
@@ -10,13 +10,17 @@ object FormUserPerf: TFormUserPerf
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
-  Font.Name = 'Tahoma'
+  Constraints.MinHeight = 540
+  Constraints.MinWidth = 760
+  Font.Name = 'Segoe UI'
   Font.Style = []
   FormStyle = fsStayOnTop
   KeyPreview = True
   OldCreateOrder = False
   Position = poScreenCenter
   OnClose = FormClose
+  OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
@@ -134,7 +138,7 @@ object FormUserPerf: TFormUserPerf
   object Panel2: TPanel
     Left = 0
     Top = 41
-    Width = 100
+    Width = 144
     Height = 556
     Align = alLeft
     BevelOuter = bvLowered
@@ -143,8 +147,9 @@ object FormUserPerf: TFormUserPerf
     object SpeedUser: TSpeedButton
       Left = 1
       Top = 1
-      Width = 98
-      Height = 60
+      Width = 142
+      Height = 56
+      Align = alTop
       Cursor = crHandPoint
       GroupIndex = 1
       Down = True
@@ -233,8 +238,9 @@ object FormUserPerf: TFormUserPerf
     object SpeedPerfil: TSpeedButton
       Left = 1
       Top = 61
-      Width = 98
-      Height = 60
+      Width = 142
+      Height = 56
+      Align = alTop
       Cursor = crHandPoint
       GroupIndex = 1
       Caption = '&Perfil'
@@ -322,8 +328,9 @@ object FormUserPerf: TFormUserPerf
     object SpeedLog: TSpeedButton
       Left = 1
       Top = 121
-      Width = 98
-      Height = 60
+      Width = 142
+      Height = 56
+      Align = alTop
       Cursor = crHandPoint
       GroupIndex = 1
       Caption = '&Log'
@@ -411,8 +418,9 @@ object FormUserPerf: TFormUserPerf
     object SpeedUserLog: TSpeedButton
       Left = 1
       Top = 181
-      Width = 98
-      Height = 60
+      Width = 142
+      Height = 56
+      Align = alTop
       Cursor = crHandPoint
       GroupIndex = 1
       Caption = 'Usu'#225'rios Logados'
@@ -500,8 +508,9 @@ object FormUserPerf: TFormUserPerf
     object SBSair: TSpeedButton
       Left = 1
       Top = 241
-      Width = 98
-      Height = 60
+      Width = 142
+      Height = 56
+      Align = alBottom
       Cursor = crHandPoint
       GroupIndex = 1
       Caption = 'Fechar'
@@ -568,9 +577,9 @@ object FormUserPerf: TFormUserPerf
     end
   end
   object Panel3: TPanel
-    Left = 100
+    Left = 144
     Top = 41
-    Width = 698
+    Width = 654
     Height = 556
     Align = alClient
     BevelOuter = bvNone
