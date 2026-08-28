@@ -1,21 +1,22 @@
 object UCFrame_UsersLogged: TUCFrame_UsersLogged
   Left = 0
   Top = 0
-  Width = 578
-  Height = 240
+  Width = 720
+  Height = 360
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -11
-  Font.Name = 'MS Sans Serif'
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
   Font.Style = []
   ParentFont = False
   TabOrder = 0
   TabStop = True
+  OnResize = FrameResize
   object DBGrid: TDBGrid
     Left = 0
     Top = 0
-    Width = 578
-    Height = 192
+    Width = 720
+    Height = 304
     Align = alClient
     DataSource = dsDados
     Options = [dgTitles, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgAlwaysShowSelection, dgConfirmDelete, dgCancelOnExit]
@@ -24,8 +25,8 @@ object UCFrame_UsersLogged: TUCFrame_UsersLogged
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
-    TitleFont.Height = -11
-    TitleFont.Name = 'MS Sans Serif'
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
     TitleFont.Style = []
     Columns = <
       item
@@ -62,21 +63,30 @@ object UCFrame_UsersLogged: TUCFrame_UsersLogged
   end
   object Panel3: TPanel
     Left = 0
-    Top = 192
-    Width = 578
-    Height = 48
+    Top = 304
+    Width = 720
+    Height = 56
     Align = alBottom
     BevelOuter = bvNone
+    Padding.Left = 8
+    Padding.Top = 8
+    Padding.Right = 8
+    Padding.Bottom = 8
     TabOrder = 1
     DesignSize = (
-      578
-      48)
+      720
+      56)
     object BitMsg: TBitBtn
-      Left = 266
-      Top = 11
-      Width = 145
-      Height = 25
-      Anchors = [akTop, akRight]
+      Left = 8
+      Top = 8
+      Width = 112
+      Height = 40
+      Align = alLeft
+      AlignWithMargins = True
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 6
+      Margins.Bottom = 0
       Caption = '&Mensagem'
       TabOrder = 0
       OnClick = BitMsgClick
@@ -101,14 +111,34 @@ object UCFrame_UsersLogged: TUCFrame_UsersLogged
         1F7C1F7C1F7C1F7C1F7C1F7C1F7CD852D852D852D852D852D8521F7C1F7C1F7C
         1F7C1F7C1F7C}
     end
-    object BitRefresh: TBitBtn
-      Left = 417
-      Top = 11
-      Width = 145
-      Height = 25
-      Anchors = [akTop, akRight]
-      Caption = '&Atualizar'
+    object BitRemove: TBitBtn
+      Left = 126
+      Top = 8
+      Width = 128
+      Height = 40
+      Align = alLeft
+      AlignWithMargins = True
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 6
+      Margins.Bottom = 0
+      Caption = '&Remover da lista'
       TabOrder = 1
+      OnClick = BitRemoveClick
+    end
+    object BitRefresh: TBitBtn
+      Left = 260
+      Top = 8
+      Width = 112
+      Height = 40
+      Align = alLeft
+      AlignWithMargins = True
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 6
+      Margins.Bottom = 0
+      Caption = '&Atualizar'
+      TabOrder = 2
       OnClick = BitRefreshClick
       Glyph.Data = {
         36050000424D3605000000000000360400002800000010000000100000000100
@@ -156,10 +186,12 @@ object UCFrame_UsersLogged: TUCFrame_UsersLogged
     end
   end
   object dsDados: TDataSource
+    OnDataChange = dsDadosDataChange
     Left = 132
     Top = 144
   end
   object PopupMenu1: TPopupMenu
+    OnPopup = PopupMenu1Popup
     Left = 320
     Top = 88
     object miDeleteSelected: TMenuItem

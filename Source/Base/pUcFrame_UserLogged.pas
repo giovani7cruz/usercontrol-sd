@@ -93,6 +93,7 @@ type
     Panel3: TPanel;
     BitMsg: TBitBtn;
     BitRefresh: TBitBtn;
+    BitRemove: TBitBtn;
     PopupMenu1: TPopupMenu;
     miDeleteSelected: TMenuItem;
     miDeleteAll: TMenuItem;
@@ -100,12 +101,20 @@ type
     procedure BitMsgClick(Sender: TObject);
     procedure miDeleteSelectedClick(Sender: TObject);
     procedure miDeleteAllClick(Sender: TObject);
+    procedure BitRemoveClick(Sender: TObject);
+    procedure dsDadosDataChange(Sender: TObject; Field: TField);
+    procedure FrameResize(Sender: TObject);
+    procedure PopupMenu1Popup(Sender: TObject);
   private
     DSUserLogados: TDataset;
     UCMes: TUCApplicationMessage;
     procedure ConfigureSessionFields;
     procedure SessionDateGetText(Sender: TField; var Text: String;
       DisplayText: Boolean);
+    procedure ApplyVisualStyle;
+    procedure ResizeGridColumns;
+    function SelectedLogonID: String;
+    procedure UpdateActionState;
   public
     FUserControl: TUserControl;
     procedure SetWindow;
@@ -115,7 +124,7 @@ type
 implementation
 
 uses
-  UCMessages, DateUtils;
+  UCMessages, DateUtils, UCVisualStyle;
 
 {$IFDEF FPC}
 {$R *.lfm}
@@ -182,7 +191,8 @@ const
     '  %s L inner join ' +
     '  %s U on U.%s = L.%s ' +
     'where ' +
-    '  L.%s = %s ';
+    '  L.%s = %s ' +
+    'order by U.%s, L.%s desc';
 var
   SQLStmt: String;
   I: Integer;
@@ -190,9 +200,13 @@ var
 begin
   UCMes := nil;
   Form := Application.MainForm;
-  for I := 0 to Form.ComponentCount - 1 do
-    if (Form.Components[I] is TUCApplicationMessage) then
-      UCMes := TUCApplicationMessage(Form.Components[I]);
+  if Assigned(Form) then
+    for I := 0 to Form.ComponentCount - 1 do
+      if Form.Components[I] is TUCApplicationMessage then
+      begin
+        UCMes := TUCApplicationMessage(Form.Components[I]);
+        Break;
+      end;
   BitMsg.Visible := UCMes <> nil;
 
   FUserControl.UsersLogged.RemoveExpiredSessions;
@@ -202,9 +216,12 @@ begin
       TableUsersLogged.FieldLogonID, TableUsers.FieldUserName, TableUsers.FieldUserId, TableUsers.FieldLogin,
       TableUsersLogged.FieldMachineName, TableUsersLogged.FieldData, TableUsersLogged.TableName, TableUsers.TableName,
       TableUsers.FieldUserId, TableUsersLogged.FieldUserId,
-      TableUsersLogged.FieldApplicationID, QuotedStr(ApplicationID)
+      TableUsersLogged.FieldApplicationID, QuotedStr(ApplicationID),
+      TableUsers.FieldUserName, TableUsersLogged.FieldData
     ]);
 
+    dsDados.DataSet := nil;
+    FreeAndNil(DSUserLogados);
     DSUserLogados := DataConnector.UCGetSQLDataset(SQLStmt);
 
     with UserSettings.UsersLogged do
@@ -212,6 +229,9 @@ begin
       Caption := LabelCaption;
       BitMsg.Caption := BtnMessage;
       BitRefresh.Caption := BtnRefresh;
+      BitRemove.Caption := BtnRemove;
+      miDeleteSelected.Caption := BtnRemove;
+      miDeleteAll.Caption := MenuRemoveAll;
 
       DBGrid.Columns[0].Title.Caption := ColName;
       DBGrid.Columns[1].Title.Caption := ColLogin;
@@ -222,6 +242,9 @@ begin
   end;
   dsDados.Dataset := DSUserLogados;
   ConfigureSessionFields;
+  ApplyVisualStyle;
+  ResizeGridColumns;
+  UpdateActionState;
 end;
 
 procedure TUCFrame_UsersLogged.BitRefreshClick(Sender: TObject);
@@ -232,6 +255,7 @@ begin
     FUserControl.UsersLogged.RemoveExpiredSessions;
     FUserControl.DataConnector.RefreshDataSet(dsDados.Dataset);
     ConfigureSessionFields;
+    UpdateActionState;
   finally
     Screen.Cursor := crDefault;
   end;
@@ -239,6 +263,7 @@ end;
 
 destructor TUCFrame_UsersLogged.Destroy;
 begin
+  dsDados.DataSet := nil;
   FreeAndNil(DSUserLogados);
 //  FreeAndNil(UCMes); Comentado propositalmente, pois este componente pertence ao form principal e não desta tela, então não deve se dar free;
   inherited;
@@ -248,6 +273,12 @@ procedure TUCFrame_UsersLogged.miDeleteAllClick(Sender: TObject);
 const
   sql = 'delete from %s L where L.%s = %s and L.%s <> %s';
 begin
+  if SelectedLogonID = '' then
+    Exit;
+  if MessageDlg(FUserControl.UserSettings.UsersLogged.PromptRemoveAll,
+    mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
+    Exit;
+
   FUserControl.DataConnector.UCExecSQL(Format(sql, [
     FUserControl.TableUsersLogged.TableName,
     FUserControl.TableUsersLogged.FieldApplicationID,
@@ -262,12 +293,20 @@ procedure TUCFrame_UsersLogged.miDeleteSelectedClick(Sender: TObject);
 const
   sql = 'delete from %s L where L.%s = %s and L.%s = %s and L.%s <> %s';
 begin
+  if SelectedLogonID = '' then
+    Exit;
+  if SameText(SelectedLogonID, FUserControl.CurrentUser.IdLogon) then
+    Exit;
+  if MessageDlg(FUserControl.UserSettings.UsersLogged.PromptRemove,
+    mtConfirmation, [mbYes, mbNo], 0) <> mrYes then
+    Exit;
+
   FUserControl.DataConnector.UCExecSQL(Format(sql, [
     FUserControl.TableUsersLogged.TableName,
     FUserControl.TableUsersLogged.FieldApplicationID,
     QuotedStr(FUserControl.ApplicationID),
     FUserControl.TableUsersLogged.FieldLogonID,
-    QuotedStr(dsDados.DataSet.FieldByName('LogonID').AsString),
+    QuotedStr(SelectedLogonID),
     FUserControl.TableUsersLogged.FieldLogonID,
     QuotedStr(FUserControl.CurrentUser.IdLogon)
   ]));
@@ -278,11 +317,100 @@ procedure TUCFrame_UsersLogged.BitMsgClick(Sender: TObject);
 var
   Msg: String;
 begin
-  if Assigned(UCMes) then
+  if Assigned(UCMes) and (SelectedLogonID <> '') then
     if InputQuery(FUserControl.UserSettings.UsersLogged.InputText,
       FUserControl.UserSettings.UsersLogged.InputCaption, Msg) = True then
       UCMes.SendAppMessage(dsDados.Dataset.FieldValues['id'],
         FUserControl.UserSettings.UsersLogged.MsgSystem, Msg);
+end;
+
+procedure TUCFrame_UsersLogged.ApplyVisualStyle;
+begin
+  TUCVisualStyle.ApplyFrame(Self);
+  TUCVisualStyle.StyleGrid(DBGrid);
+  TUCVisualStyle.StyleActionPanel(Panel3);
+  TUCVisualStyle.StyleActionButton(BitMsg);
+  TUCVisualStyle.StyleActionButton(BitRemove);
+  TUCVisualStyle.StyleActionButton(BitRefresh);
+  TUCVisualStyle.FitButtonWidth(BitMsg, 112);
+  TUCVisualStyle.FitButtonWidth(BitRemove, 128);
+  TUCVisualStyle.FitButtonWidth(BitRefresh, 112);
+end;
+
+procedure TUCFrame_UsersLogged.BitRemoveClick(Sender: TObject);
+begin
+  miDeleteSelectedClick(Sender);
+end;
+
+procedure TUCFrame_UsersLogged.dsDadosDataChange(Sender: TObject; Field: TField);
+begin
+  UpdateActionState;
+end;
+
+procedure TUCFrame_UsersLogged.FrameResize(Sender: TObject);
+begin
+  ResizeGridColumns;
+end;
+
+procedure TUCFrame_UsersLogged.PopupMenu1Popup(Sender: TObject);
+begin
+  UpdateActionState;
+end;
+
+procedure TUCFrame_UsersLogged.ResizeGridColumns;
+var
+  AvailableWidth: Integer;
+begin
+  if not Assigned(DBGrid) or (DBGrid.Columns.Count < 4) then
+    Exit;
+
+  AvailableWidth := DBGrid.ClientWidth - GetSystemMetrics(SM_CXVSCROLL) - 28;
+  if AvailableWidth <= 0 then
+    Exit;
+
+  DBGrid.Columns[0].Width := AvailableWidth * 30 div 100;
+  DBGrid.Columns[1].Width := AvailableWidth * 20 div 100;
+  DBGrid.Columns[2].Width := AvailableWidth * 25 div 100;
+  DBGrid.Columns[3].Width := AvailableWidth - DBGrid.Columns[0].Width -
+    DBGrid.Columns[1].Width - DBGrid.Columns[2].Width;
+end;
+
+function TUCFrame_UsersLogged.SelectedLogonID: String;
+var
+  DataSet: TDataSet;
+  Field: TField;
+begin
+  Result := '';
+  DataSet := dsDados.DataSet;
+  if not Assigned(DataSet) or not DataSet.Active or DataSet.IsEmpty then
+    Exit;
+
+  Field := DataSet.FindField('LogonID');
+  if Assigned(Field) then
+    Result := Field.AsString;
+end;
+
+procedure TUCFrame_UsersLogged.UpdateActionState;
+var
+  HasSelection: Boolean;
+  CanRemove: Boolean;
+begin
+  if not Assigned(FUserControl) then
+  begin
+    BitMsg.Enabled := False;
+    BitRemove.Enabled := False;
+    miDeleteSelected.Enabled := False;
+    miDeleteAll.Enabled := False;
+    Exit;
+  end;
+
+  HasSelection := SelectedLogonID <> '';
+  CanRemove := HasSelection and not SameText(SelectedLogonID,
+    FUserControl.CurrentUser.IdLogon);
+  BitMsg.Enabled := BitMsg.Visible and HasSelection;
+  BitRemove.Enabled := CanRemove;
+  miDeleteSelected.Enabled := CanRemove;
+  miDeleteAll.Enabled := HasSelection;
 end;
 
 end.

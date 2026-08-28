@@ -500,6 +500,18 @@ begin
       InputText := RetornaLingua(DestSettings.fLanguage, 'Const_UserLogged_InputText');
     if MsgSystem = '' then
       MsgSystem := RetornaLingua(DestSettings.fLanguage, 'Const_UserLogged_MsgSystem');
+    if BtnRemove = '' then
+      BtnRemove := RetornaLingua(DestSettings.fLanguage,
+        'Const_UserLogged_Remove');
+    if MenuRemoveAll = '' then
+      MenuRemoveAll := RetornaLingua(DestSettings.fLanguage,
+        'Const_UserLogged_RemoveAll');
+    if PromptRemove = '' then
+      PromptRemove := RetornaLingua(DestSettings.fLanguage,
+        'Const_UserLogged_PromptRemove');
+    if PromptRemoveAll = '' then
+      PromptRemoveAll := RetornaLingua(DestSettings.fLanguage,
+        'Const_UserLogged_PromptRemoveAll');
   end;
 end;
 
@@ -758,6 +770,14 @@ begin
       'Const_UserLogged_InputCaption');
     InputText := RetornaLingua(DestSettings.Language, 'Const_UserLogged_InputText');
     MsgSystem := RetornaLingua(DestSettings.Language, 'Const_UserLogged_MsgSystem');
+    BtnRemove := RetornaLingua(DestSettings.Language,
+      'Const_UserLogged_Remove');
+    MenuRemoveAll := RetornaLingua(DestSettings.Language,
+      'Const_UserLogged_RemoveAll');
+    PromptRemove := RetornaLingua(DestSettings.Language,
+      'Const_UserLogged_PromptRemove');
+    PromptRemoveAll := RetornaLingua(DestSettings.Language,
+      'Const_UserLogged_PromptRemoveAll');
   end;
 end;
 

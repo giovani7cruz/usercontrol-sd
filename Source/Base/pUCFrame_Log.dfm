@@ -1,21 +1,22 @@
 object UCFrame_Log: TUCFrame_Log
   Left = 0
   Top = 0
-  Width = 563
-  Height = 498
+  Width = 720
+  Height = 560
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -11
-  Font.Name = 'MS Sans Serif'
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
   Font.Style = []
   ParentFont = False
   TabOrder = 0
   TabStop = True
+  OnResize = FrameResize
   object DBGrid1: TDBGrid
     Left = 0
-    Top = 0
-    Width = 563
-    Height = 362
+    Top = 124
+    Width = 720
+    Height = 281
     Align = alClient
     Ctl3D = True
     DataSource = DataSource1
@@ -25,8 +26,8 @@ object UCFrame_Log: TUCFrame_Log
     TabOrder = 0
     TitleFont.Charset = DEFAULT_CHARSET
     TitleFont.Color = clWindowText
-    TitleFont.Height = -11
-    TitleFont.Name = 'MS Sans Serif'
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
     TitleFont.Style = []
     OnDrawColumnCell = DBGrid1DrawColumnCell
     OnTitleClick = DBGrid1TitleClick
@@ -50,9 +51,9 @@ object UCFrame_Log: TUCFrame_Log
   end
   object SplitterLogDetail: TSplitter
     Left = 0
-    Top = 246
-    Width = 563
-    Height = 4
+    Top = 405
+    Width = 720
+    Height = 5
     Cursor = crVSplit
     Align = alBottom
     AutoSnap = False
@@ -60,90 +61,102 @@ object UCFrame_Log: TUCFrame_Log
   end
   object PanelLogDetail: TPanel
     Left = 0
-    Top = 250
-    Width = 563
-    Height = 112
+    Top = 410
+    Width = 720
+    Height = 150
     Align = alBottom
     BevelOuter = bvNone
+    Padding.Left = 12
+    Padding.Top = 8
+    Padding.Right = 12
+    Padding.Bottom = 10
     TabOrder = 1
     object lbLogDetail: TLabel
-      Left = 8
-      Top = 7
+      Left = 12
+      Top = 11
       Width = 94
       Height = 13
       Caption = 'Mensagem completa'
     end
     object btCopyLog: TBitBtn
-      Left = 425
-      Top = 3
-      Width = 130
-      Height = 25
+      Left = 576
+      Top = 6
+      Width = 132
+      Height = 32
       Anchors = [akTop, akRight]
       Caption = 'Copiar mensagem'
       TabOrder = 0
       OnClick = btCopyLogClick
     end
     object DBMemoLogDetail: TDBMemo
-      Left = 8
-      Top = 32
-      Width = 547
-      Height = 72
+      Left = 12
+      Top = 42
+      Width = 696
+      Height = 98
       Anchors = [akLeft, akTop, akRight, akBottom]
       DataField = 'MSG'
       DataSource = DataSource1
       ReadOnly = True
-      ScrollBars = ssVertical
+      ScrollBars = ssBoth
       TabOrder = 1
+      WordWrap = False
     end
   end
   object Panel1: TPanel
     Left = 0
-    Top = 362
-    Width = 563
-    Height = 136
-    Align = alBottom
+    Top = 0
+    Width = 720
+    Height = 124
+    Align = alTop
     BevelOuter = bvNone
+    Padding.Left = 12
+    Padding.Top = 8
+    Padding.Right = 12
+    Padding.Bottom = 8
     TabOrder = 2
     object lbUsuario: TLabel
-      Left = 16
-      Top = 6
+      Left = 12
+      Top = 10
       Width = 42
       Height = 13
       Caption = 'Usu'#225'rio :'
     end
     object lbData: TLabel
-      Left = 176
-      Top = 6
+      Left = 194
+      Top = 10
       Width = 29
       Height = 13
       Caption = 'Data :'
     end
     object lbNivel: TLabel
-      Left = 376
-      Top = 6
+      Left = 548
+      Top = 10
       Width = 69
       Height = 13
+      Anchors = [akTop, akRight]
       Caption = 'N'#237'vel m'#237'nimo :'
     end
     object Bevel3: TBevel
-      Left = 0
-      Top = 98
-      Width = 529
+      Left = 12
+      Top = 116
+      Width = 696
       Height = 1
       Style = bsRaised
+      Visible = False
     end
     object Label1: TLabel
-      Left = 16
-      Top = 52
+      Left = 12
+      Top = 65
       Width = 58
       Height = 13
       Caption = 'Mensagem :'
     end
     object btfiltro: TBitBtn
-      Left = 145
-      Top = 105
-      Width = 130
-      Height = 25
+      Left = 478
+      Top = 82
+      Width = 112
+      Height = 32
+      Anchors = [akTop, akRight]
       Cursor = crHandPoint
       Caption = 'Aplicar filtro'
       TabOrder = 5
@@ -202,10 +215,11 @@ object UCFrame_Log: TUCFrame_Log
       NumGlyphs = 2
     end
     object btexclui: TBitBtn
-      Left = 288
-      Top = 105
-      Width = 130
-      Height = 25
+      Left = 596
+      Top = 82
+      Width = 112
+      Height = 32
+      Anchors = [akTop, akRight]
       Cursor = crHandPoint
       Caption = 'Excluir Log'
       TabOrder = 6
@@ -255,37 +269,38 @@ object UCFrame_Log: TUCFrame_Log
         0404040404040404040404040404040404040404040404040404}
     end
     object ComboUsuario: TComboBox
-      Left = 16
-      Top = 25
-      Width = 145
-      Height = 21
+      Left = 12
+      Top = 29
+      Width = 170
+      Height = 23
       Style = csDropDownList
-      ItemHeight = 13
+      ItemHeight = 17
       TabOrder = 0
     end
     object Data1: TDateTimePicker
-      Left = 176
-      Top = 25
-      Width = 89
-      Height = 21
+      Left = 194
+      Top = 29
+      Width = 88
+      Height = 23
       Date = 37615.000000000000000000
       Time = 37615.000000000000000000
       TabOrder = 1
     end
     object Data2: TDateTimePicker
-      Left = 271
-      Top = 25
-      Width = 89
-      Height = 21
+      Left = 300
+      Top = 29
+      Width = 88
+      Height = 23
       Date = 37615.000000000000000000
       Time = 37615.000000000000000000
       TabOrder = 2
     end
     object ComboNivel: TComboBox
-      Left = 376
-      Top = 25
-      Width = 145
+      Left = 548
+      Top = 29
+      Width = 160
       Height = 24
+      Anchors = [akTop, akRight]
       Style = csOwnerDrawFixed
       ItemHeight = 18
       TabOrder = 3
@@ -297,11 +312,20 @@ object UCFrame_Log: TUCFrame_Log
         'Critique')
     end
     object Mensagem: TEdit
-      Left = 16
-      Top = 71
-      Width = 505
-      Height = 21
+      Left = 12
+      Top = 83
+      Width = 454
+      Height = 23
+      Anchors = [akLeft, akTop, akRight]
       TabOrder = 4
+      OnKeyDown = MensagemKeyDown
+    end
+    object lbDateSeparator: TLabel
+      Left = 289
+      Top = 33
+      Width = 5
+      Height = 13
+      Caption = '-'
     end
   end
   object DataSource1: TDataSource

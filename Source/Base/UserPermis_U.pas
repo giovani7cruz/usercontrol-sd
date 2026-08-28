@@ -195,6 +195,9 @@ type
     procedure edSearchKeyDown(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure btSearchNextClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
     FMenu: TMenu;
     FActions: TObject;
@@ -242,6 +245,9 @@ type
     procedure DeleteRight(const ItemRight: String);
     procedure DeleteRightEX(const RightKey: String);
     procedure SaveChangedRights;
+    procedure ApplyLocalizedCaptions;
+    procedure ApplyVisualStyle;
+    procedure ToggleSelectedTree(TreeView: TTreeView);
   public
     FTempIdUser: Integer;
     FUserControl: TUserControl;
@@ -258,7 +264,8 @@ implementation
 
 uses
   ActnList,
-  pUCFrame_Profile;
+  pUCFrame_Profile,
+  UCVisualStyle;
 
 {$IFDEF FPC}
 {$R *.lfm}
@@ -284,6 +291,72 @@ begin
   end;
 
   Close;
+end;
+
+procedure TUserPermis.ApplyLocalizedCaptions;
+begin
+  if not Assigned(FUserControl) then
+    Exit;
+
+  with FUserControl.UserSettings.Rights do
+  begin
+    lbSearch.Caption := SearchLabel;
+    btSearchNext.Caption := SearchNext;
+  end;
+
+  {$IFNDEF FPC}
+  edSearch.TextHint := StringReplace(lbSearch.Caption, '&', '', [rfReplaceAll]);
+  {$ENDIF}
+end;
+
+procedure TUserPermis.ApplyVisualStyle;
+begin
+  TUCVisualStyle.ApplyForm(Self);
+  TUCVisualStyle.StyleHeader(Panel1, LbDescricao);
+  TUCVisualStyle.StyleActionPanel(PanelSearch);
+  TUCVisualStyle.StyleActionPanel(Panel3);
+  TUCVisualStyle.StyleEdit(edSearch);
+
+  TUCVisualStyle.StyleActionButton(BtLibera);
+  TUCVisualStyle.StyleActionButton(BtBloqueia);
+  TUCVisualStyle.StylePrimaryButton(BtGrava);
+  TUCVisualStyle.StyleSecondaryButton(BtCancel);
+  TUCVisualStyle.FitButtonWidth(BtLibera, 104);
+  TUCVisualStyle.FitButtonWidth(BtBloqueia, 104);
+  TUCVisualStyle.FitButtonWidth(BtGrava, 104);
+  TUCVisualStyle.FitButtonWidth(BtCancel, 104);
+
+  lbUser.Font.Name := TUCVisualStyle.DefaultFontName;
+  lbUser.Font.Size := 12;
+  lbUser.Font.Style := [fsBold];
+  PC.Font.Assign(Font);
+  TreeMenu.Font.Assign(Font);
+  TreeAction.Font.Assign(Font);
+  TreeControls.Font.Assign(Font);
+end;
+
+procedure TUserPermis.FormCreate(Sender: TObject);
+begin
+  ApplyVisualStyle;
+end;
+
+procedure TUserPermis.FormKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if (Key = Ord('F')) and (ssCtrl in Shift) then
+  begin
+    edSearch.SetFocus;
+    edSearch.SelectAll;
+    Key := 0;
+  end
+  else if Key = VK_F3 then
+  begin
+    if ssShift in Shift then
+      NavigateSearch(-1)
+    else
+      NavigateSearch(1);
+    Key := 0;
+  end;
 end;
 
 function TUserPermis.CreateRightsIndex: TStringList;
@@ -945,6 +1018,9 @@ var
   ProfileRights: TStringList;
   ProfileExtraRights: TStringList;
 begin
+  ApplyLocalizedCaptions;
+  ApplyVisualStyle;
+
   // Adcionado por Luiz
   SetLength(FListaAction, 0);
   SetLength(FListaMenu, 0);
@@ -1039,6 +1115,8 @@ begin
   SetLength(FSearchResults, 0);
   edSearch.Clear;
   lbSearchResult.Caption := '';
+  if edSearch.CanFocus then
+    edSearch.SetFocus;
 end;
 
 function TUserPermis.NormalizeSearchText(const Value: String): String;
@@ -1273,9 +1351,23 @@ procedure TUserPermis.TreeMenuKeyPress(Sender: TObject; var Key: char);
 begin
   if Key = ' ' then
   begin
-    TTreeView(Sender).OnClick(Sender);
+    ToggleSelectedTree(TTreeView(Sender));
     Key := #0;
   end;
+end;
+
+procedure TUserPermis.ToggleSelectedTree(TreeView: TTreeView);
+begin
+  if not Assigned(TreeView) or not Assigned(TreeView.Selected) then
+    Exit;
+
+  if TreeView = TreeMenu then
+    TreeMenuItem(True)
+  else if TreeView = TreeAction then
+    TreeActionItem(True)
+  else if TreeView = TreeControls then
+    TreeControlItem(True);
+  ShowSearchResult;
 end;
 
 procedure TUserPermis.TreeMenuMouseUp(Sender: TObject; Button: TMouseButton;

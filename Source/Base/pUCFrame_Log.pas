@@ -132,6 +132,7 @@ type
     DBMemoLogDetail: TDBMemo;
     btCopyLog: TBitBtn;
     SplitterLogDetail: TSplitter;
+    lbDateSeparator: TLabel;
     procedure ComboNivelDrawItem(Control: TWinControl; Index: Integer;
       Rect: TRect; State: TOwnerDrawState);
     procedure DBGrid1DrawColumnCell(Sender: TObject; const Rect: TRect;
@@ -141,8 +142,16 @@ type
     procedure DBGrid1TitleClick(Column: TColumn);
     procedure btCopyLogClick(Sender: TObject);
     procedure DataSource1DataChange(Sender: TObject; Field: TField);
+    procedure FrameResize(Sender: TObject);
+    procedure MensagemKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
     procedure AplicaFiltro;
+    procedure ArrangeControls;
+    procedure ApplyVisualStyle;
+    procedure ResizeGridColumns;
+    function TryDecodeLogDate(const Value: String;
+      out LogDate: TDateTime): Boolean;
     procedure UpdateLogDetailState;
   public
     ListIdUser: TStringList;
@@ -155,7 +164,8 @@ type
 implementation
 
 uses
-  UCDataInfo;
+  UCDataInfo,
+  UCVisualStyle;
 
 {$IFDEF FPC}
 {$R *.lfm}
@@ -190,40 +200,37 @@ end;
 
 procedure TUCFrame_Log.ComboNivelDrawItem(Control: TWinControl; Index: Integer;
   Rect: TRect; State: TOwnerDrawState);
-var
-  TempImg: Graphics.TBitmap;
 begin
-  TempImg := Graphics.TBitmap.Create;
-  ImageList1.GetBitmap(Index, TempImg);
-  ComboNivel.Canvas.Draw(Rect.Left + 5, Rect.Top + 1, TempImg);
+  ComboNivel.Canvas.FillRect(Rect);
+  if (Index < 0) or (Index >= ComboNivel.Items.Count) then
+    Exit;
+
+  if Index < ImageList1.Count then
+    ImageList1.Draw(ComboNivel.Canvas, Rect.Left + 5, Rect.Top + 1, Index, True);
   ComboNivel.Canvas.TextRect(Rect, Rect.Left + 30, Rect.Top + 2,
     ComboNivel.items[Index]);
-  ComboNivel.Canvas.Draw(Rect.Left + 5, Rect.Top + 1, TempImg);
-  FreeAndnil(TempImg);
+  if odFocused in State then
+    ComboNivel.Canvas.DrawFocusRect(Rect);
 end;
 
 procedure TUCFrame_Log.DBGrid1DrawColumnCell(Sender: TObject; const Rect: TRect;
   DataCol: Integer; Column: TColumn; State: TGridDrawState);
 var
-  FData: System.TDateTime;
+  FData: TDateTime;
   TempData: String;
-  img: TImage;
 begin
-  if not DSLog.IsEmpty then
+  if Assigned(Column.Field) and Assigned(Column.Field.DataSet) and
+    Column.Field.DataSet.Active and not Column.Field.DataSet.IsEmpty then
   begin
+    DBGrid1.Canvas.FillRect(Rect);
     if UpperCase(Column.FieldName) = 'NIVEL' then
     begin
-      if Column.Field.AsInteger >= 0 then
-      begin
-        img := TImage.Create(nil);
-        try
-          ImageList1.GetBitmap(Column.Field.AsInteger, img.Picture.Bitmap);
-          DBGrid1.Canvas.FillRect(Rect);
-          DBGrid1.Canvas.Draw((((Rect.Left + Rect.Right) - img.Picture.Bitmap.Width) div 2), Rect.Top, img.Picture.Bitmap);
-        finally
-          img.Free;
-        end;
-      end
+      if (Column.Field.AsInteger >= 0) and
+        (Column.Field.AsInteger < ImageList1.Count) then
+        ImageList1.Draw(DBGrid1.Canvas,
+          ((Rect.Left + Rect.Right) - ImageList1.Width) div 2,
+          Rect.Top + ((Rect.Bottom - Rect.Top - ImageList1.Height) div 2),
+          Column.Field.AsInteger, True)
       else
         DBGrid1.Canvas.TextRect(Rect, Rect.Left + 2, Rect.Top + 2,
           Column.Field.AsString);
@@ -231,21 +238,55 @@ begin
     else if UpperCase(Column.FieldName) = 'DATA' then
     begin
       TempData := Column.Field.AsString;
-      FData := EncodeDate(StrToInt(Copy(TempData, 1, 4)),
-        StrToInt(Copy(TempData, 5, 2)), StrToInt(Copy(TempData, 7, 2))) +
-        EncodeTime(StrToInt(Copy(TempData, 9, 2)), StrToInt(Copy(TempData, 11, 2)
-        ), StrToInt(Copy(TempData, 13, 2)), 0);
-      DBGrid1.Canvas.TextRect(Rect, Rect.Left + 2, Rect.Top + 2,
-        DateTimeToStr(FData));
+      if TryDecodeLogDate(TempData, FData) then
+        TempData := DateTimeToStr(FData);
+      DBGrid1.Canvas.TextRect(Rect, Rect.Left + 4, Rect.Top + 2, TempData);
     end
     else
-      DBGrid1.Canvas.TextRect(Rect, Rect.Left + 2, Rect.Top + 2,
+      DBGrid1.Canvas.TextRect(Rect, Rect.Left + 4, Rect.Top + 2,
         Column.Field.AsString);
+
+    if gdFocused in State then
+      DBGrid1.Canvas.DrawFocusRect(Rect);
   end;
+end;
+
+function TUCFrame_Log.TryDecodeLogDate(const Value: String;
+  out LogDate: TDateTime): Boolean;
+var
+  YearValue, MonthValue, DayValue: Word;
+  HourValue, MinuteValue, SecondValue: Word;
+  DatePart, TimePart: TDateTime;
+  NumberValue: Integer;
+begin
+  Result := False;
+  LogDate := 0;
+  if Length(Value) < 14 then
+    Exit;
+
+  if not TryStrToInt(Copy(Value, 1, 4), NumberValue) then Exit;
+  YearValue := NumberValue;
+  if not TryStrToInt(Copy(Value, 5, 2), NumberValue) then Exit;
+  MonthValue := NumberValue;
+  if not TryStrToInt(Copy(Value, 7, 2), NumberValue) then Exit;
+  DayValue := NumberValue;
+  if not TryStrToInt(Copy(Value, 9, 2), NumberValue) then Exit;
+  HourValue := NumberValue;
+  if not TryStrToInt(Copy(Value, 11, 2), NumberValue) then Exit;
+  MinuteValue := NumberValue;
+  if not TryStrToInt(Copy(Value, 13, 2), NumberValue) then Exit;
+  SecondValue := NumberValue;
+
+  Result := TryEncodeDate(YearValue, MonthValue, DayValue, DatePart) and
+    TryEncodeTime(HourValue, MinuteValue, SecondValue, 0, TimePart);
+  if Result then
+    LogDate := DatePart + TimePart;
 end;
 
 procedure TUCFrame_Log.DBGrid1TitleClick(Column: TColumn);
 begin
+  if not Assigned(Column) or not Assigned(Column.Field) then
+    Exit;
   FUsercontrol.DataConnector.OrderBy(Column.Field.DataSet, Column.FieldName);
 end;
 
@@ -274,20 +315,13 @@ begin
     Temp := Temp + ' and ' + FTabLog + '.idUser = ' + ListIdUser
       [ComboUsuario.ItemIndex];
 
-  try
-    FUsercontrol.DataConnector.UCExecSQL(Temp);
-    AplicaFiltro;
-    DBGrid1.Repaint;
-  except
-  end;
+  FUsercontrol.DataConnector.UCExecSQL(Temp);
+  AplicaFiltro;
+  DBGrid1.Repaint;
 
-  try
-    FUsercontrol.Log(Format(FUsercontrol.UserSettings.Log.DeletePerformed,
-      [ComboUsuario.Text, DateTimeToStr(Data1.DateTime),
-      DateTimeToStr(Data2.DateTime), ComboNivel.Text]), 2);
-  except
-    ;
-  end;
+  FUsercontrol.Log(Format(FUsercontrol.UserSettings.Log.DeletePerformed,
+    [ComboUsuario.Text, DateTimeToStr(Data1.DateTime),
+    DateTimeToStr(Data2.DateTime), ComboNivel.Text]), 2);
 
 end;
 
@@ -298,12 +332,10 @@ end;
 
 procedure TUCFrame_Log.AplicaFiltro;
 var
-  FTabUser, FTabLog: String;
+  FTabLog: String;
   Temp: String;
 begin
-  DSLog.Close;
   FTabLog := FUsercontrol.LogControl.TableLog;
-  FTabUser := FUsercontrol.TableUsers.TableName;
 
   Temp := Format('Select TabUser.' + FUsercontrol.TableUsers.FieldUserName +
     ' as nome, ' + FTabLog + '.* ' + 'from ' + FTabLog +
@@ -323,12 +355,102 @@ begin
 
   Temp := Temp + ' order by data desc';
 
-  FreeAndnil(DSLog);
   DataSource1.DataSet := nil;
+  FreeAndnil(DSLog);
   DSLog := FUsercontrol.DataConnector.UCGetSQLDataset(Temp);
   DataSource1.DataSet := DSLog;
   btexclui.Enabled := not DSLog.IsEmpty;
   UpdateLogDetailState;
+end;
+
+procedure TUCFrame_Log.ApplyVisualStyle;
+begin
+  TUCVisualStyle.ApplyFrame(Self);
+  TUCVisualStyle.StyleActionPanel(Panel1);
+  TUCVisualStyle.StyleActionPanel(PanelLogDetail);
+  TUCVisualStyle.StyleEdit(Mensagem);
+  TUCVisualStyle.StyleGrid(DBGrid1);
+  TUCVisualStyle.StylePrimaryButton(btfiltro);
+  TUCVisualStyle.StyleActionButton(btexclui);
+  TUCVisualStyle.StyleActionButton(btCopyLog);
+  TUCVisualStyle.FitButtonWidth(btfiltro, 112);
+  TUCVisualStyle.FitButtonWidth(btexclui, 112);
+  TUCVisualStyle.FitButtonWidth(btCopyLog, 120);
+
+  ComboUsuario.Font.Assign(Font);
+  ComboNivel.Font.Assign(Font);
+  Data1.Font.Assign(Font);
+  Data2.Font.Assign(Font);
+  DBMemoLogDetail.Font.Assign(Font);
+  lbLogDetail.Font.Style := [fsBold];
+  ArrangeControls;
+end;
+
+procedure TUCFrame_Log.ArrangeControls;
+var
+  EditWidth: Integer;
+begin
+  if not Assigned(Panel1) or not Assigned(PanelLogDetail) or
+    not Assigned(btfiltro) or not Assigned(btexclui) or
+    not Assigned(btCopyLog) or not Assigned(Mensagem) then
+    Exit;
+
+  btexclui.Left := Panel1.ClientWidth - Panel1.Padding.Right - btexclui.Width;
+  btfiltro.Left := btexclui.Left - 6 - btfiltro.Width;
+  EditWidth := btfiltro.Left - Mensagem.Left - 12;
+  if EditWidth < 80 then
+    EditWidth := 80;
+  Mensagem.Width := EditWidth;
+
+  btCopyLog.Left := PanelLogDetail.ClientWidth -
+    PanelLogDetail.Padding.Right - btCopyLog.Width;
+end;
+
+procedure TUCFrame_Log.FrameResize(Sender: TObject);
+begin
+  ArrangeControls;
+  ResizeGridColumns;
+end;
+
+procedure TUCFrame_Log.MensagemKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Key = VK_RETURN then
+  begin
+    AplicaFiltro;
+    Key := 0;
+  end;
+end;
+
+procedure TUCFrame_Log.ResizeGridColumns;
+var
+  AvailableWidth: Integer;
+  MessageWidth: Integer;
+begin
+  if not Assigned(DBGrid1) then
+    Exit;
+  if DBGrid1.Columns.Count < 4 then
+    Exit;
+
+  AvailableWidth := DBGrid1.ClientWidth - GetSystemMetrics(SM_CXVSCROLL) - 28;
+  if AvailableWidth <= 0 then
+    Exit;
+
+  DBGrid1.Columns[0].Width := 48;
+  DBGrid1.Columns[2].Width := 160;
+  DBGrid1.Columns[3].Width := 148;
+  MessageWidth := AvailableWidth - DBGrid1.Columns[0].Width -
+    DBGrid1.Columns[2].Width - DBGrid1.Columns[3].Width;
+  if MessageWidth < 160 then
+  begin
+    DBGrid1.Columns[2].Width := 120;
+    DBGrid1.Columns[3].Width := 120;
+    MessageWidth := AvailableWidth - DBGrid1.Columns[0].Width -
+      DBGrid1.Columns[2].Width - DBGrid1.Columns[3].Width;
+  end;
+  if MessageWidth < 80 then
+    MessageWidth := 80;
+  DBGrid1.Columns[1].Width := MessageWidth;
 end;
 
 procedure TUCFrame_Log.UpdateLogDetailState;
@@ -398,7 +520,6 @@ begin
     DSCmd.Next;
   end;
 
-  DSCmd.Close;
   FreeAndnil(DSCmd);
 
   ComboUsuario.ItemIndex := 0;
@@ -426,6 +547,7 @@ begin
     lbNivel.Caption := LabelLevel;
     btfiltro.Caption := BtFilter;
     btexclui.Caption := BtDelete;
+    Label1.Caption := ColMessage;
     lbLogDetail.Caption := LabelDetail;
     btCopyLog.Caption := BtCopy;
 
@@ -434,7 +556,7 @@ begin
       Columns[0].Width         := 60; }
     Columns[0].Title.Caption := ColLevel;
     Columns[0].FieldName := 'NIVEL';
-    Columns[0].Width := 32;
+    Columns[0].Width := 48;
     Columns[1].Title.Caption := ColMessage;
     Columns[1].FieldName := 'MSG';
     Columns[1].Width := 290;
@@ -446,8 +568,8 @@ begin
     Columns[3].Width := 120;
   end;
 
-  Bevel3.Width := Panel1.Width - 32;
-  Bevel3.Left := 16;
+  ApplyVisualStyle;
+  ResizeGridColumns;
 end;
 
 end.

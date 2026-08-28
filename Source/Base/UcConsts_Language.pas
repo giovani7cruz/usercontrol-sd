@@ -85,7 +85,7 @@ ResourceString
 	RsENoSplashServices = 'Unable to get Borland Splash Services';
 
 const
-  MaxArray = 243;
+  MaxArray = 247;
 
   {$IFDEF FPC}
   UC_PTBR: Array [0 .. MaxArray, 0 .. 1] of utf8string = (
@@ -320,6 +320,10 @@ const
     ('Const_UserLogged_InputCaption', 'Mensagem'),
     ('Const_UserLogged_InputText', 'Digite sua mensagem'),
     ('Const_UserLogged_MsgSystem', 'Mensagem do sistema'),
+    ('Const_UserLogged_Remove', '&Remover da lista'),
+    ('Const_UserLogged_RemoveAll', 'Remover todas as outras da lista'),
+    ('Const_UserLogged_PromptRemove', 'Deseja remover a sessão selecionada da lista?'),
+    ('Const_UserLogged_PromptRemoveAll', 'Deseja remover todas as outras sessões da lista?'),
     ('Const_Men_LoginInativo', 'Atenção, seu login esta inativo'),
     ('Const_Inc_LabelStatus', 'Status'),
     ('Const_Inc_StatusActive', 'Ativo'),
@@ -571,6 +575,10 @@ const
     ('Const_UserLogged_InputCaption', 'Message'),
     ('Const_UserLogged_InputText', 'Input your message'),
     ('Const_UserLogged_MsgSystem', 'Message of system'),
+    ('Const_UserLogged_Remove', '&Remove from list'),
+    ('Const_UserLogged_RemoveAll', 'Remove all others from list'),
+    ('Const_UserLogged_PromptRemove', 'Do you want to remove the selected session from the list?'),
+    ('Const_UserLogged_PromptRemoveAll', 'Do you want to remove all other sessions from the list?'),
     ('Const_Men_LoginInativo', 'Inactive login'),
     ('Const_Inc_LabelStatus', 'Status'),
     ('Const_Inc_StatusActive', 'Active'),
@@ -822,6 +830,10 @@ const
     ('Const_UserLogged_InputCaption', 'Mensaje'),
     ('Const_UserLogged_InputText', 'Entre su mensaje'),
     ('Const_UserLogged_MsgSystem', 'Mensaje del sistema'),
+    ('Const_UserLogged_Remove', '&Quitar de la lista'),
+    ('Const_UserLogged_RemoveAll', 'Quitar todas las demás de la lista'),
+    ('Const_UserLogged_PromptRemove', '¿Desea quitar la sesión seleccionada de la lista?'),
+    ('Const_UserLogged_PromptRemoveAll', '¿Desea quitar todas las demás sesiones de la lista?'),
     ('Const_Men_LoginInativo', 'Atenção, seu login esta inativo'),
     ('Const_Inc_LabelStatus', 'Status'),
     ('Const_Inc_StatusActive', 'Ativo'),
@@ -1073,6 +1085,10 @@ const
     ('Const_UserLogged_InputCaption', 'Message'),
     ('Const_UserLogged_InputText', 'Entrez votre message'),
     ('Const_UserLogged_MsgSystem', 'Message de système'),
+    ('Const_UserLogged_Remove', '&Retirer de la liste'),
+    ('Const_UserLogged_RemoveAll', 'Retirer toutes les autres de la liste'),
+    ('Const_UserLogged_PromptRemove', 'Voulez-vous retirer la session sélectionnée de la liste ?'),
+    ('Const_UserLogged_PromptRemoveAll', 'Voulez-vous retirer toutes les autres sessions de la liste ?'),
     ('Const_Men_LoginInativo', 'Atenção, seu login esta inativo'),
     ('Const_Inc_LabelStatus', 'Status'),
     ('Const_Inc_StatusActive', 'Ativo'),

@@ -1,48 +1,53 @@
 object UserPermis: TUserPermis
   Left = 255
   Top = 154
-  Width = 597
-  Height = 608
+  Width = 760
+  Height = 620
   Caption = 'Seguran'#231'a'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
-  Font.Height = -11
-  Font.Name = 'MS Sans Serif'
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
   Font.Style = []
   FormStyle = fsStayOnTop
+  Constraints.MinHeight = 480
+  Constraints.MinWidth = 640
+  DoubleBuffered = True
   OldCreateOrder = False
   Position = poDesktopCenter
   OnClose = FormClose
+  OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnKeyDown = FormKeyDown
   OnShow = FormShow
   PixelsPerInch = 96
   TextHeight = 13
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 589
-    Height = 35
+    Width = 752
+    Height = 52
     Align = alTop
     BevelOuter = bvNone
     Color = clWhite
     TabOrder = 0
     object LbDescricao: TLabel
-      Left = 44
-      Top = 12
+      Left = 52
+      Top = 15
       Width = 205
       Height = 18
       Caption = 'Permiss'#245'es do Usu'#225'rio:'
       Font.Charset = ANSI_CHARSET
       Font.Color = clWindowText
       Font.Height = -16
-      Font.Name = 'Verdana'
+      Font.Name = 'Segoe UI'
       Font.Style = [fsBold]
       ParentFont = False
     end
     object Image1: TImage
-      Left = 8
-      Top = 4
+      Left = 12
+      Top = 12
       Width = 28
       Height = 28
       AutoSize = True
@@ -150,57 +155,61 @@ object UserPermis: TUserPermis
         FF00}
     end
     object lbUser: TLabel
-      Left = 257
-      Top = 12
+      Left = 265
+      Top = 15
       Width = 54
       Height = 18
       Caption = 'Admin'
       Font.Charset = ANSI_CHARSET
       Font.Color = clBlue
       Font.Height = -16
-      Font.Name = 'Verdana'
+      Font.Name = 'Segoe UI'
       Font.Style = [fsBold]
       ParentFont = False
     end
   end
   object PanelSearch: TPanel
     Left = 0
-    Top = 35
-    Width = 589
-    Height = 48
+    Top = 52
+    Width = 752
+    Height = 60
     Align = alTop
     BevelOuter = bvNone
+    Padding.Left = 12
+    Padding.Top = 8
+    Padding.Right = 12
+    Padding.Bottom = 6
     TabOrder = 1
     object lbSearch: TLabel
-      Left = 8
-      Top = 9
+      Left = 12
+      Top = 12
       Width = 50
       Height = 13
       Caption = 'Localizar:'
     end
     object lbSearchResult: TLabel
-      Left = 72
-      Top = 29
-      Width = 509
+      Left = 84
+      Top = 35
+      Width = 644
       Height = 13
       AutoSize = False
       Anchors = [akLeft, akTop, akRight]
     end
     object edSearch: TEdit
-      Left = 72
-      Top = 5
-      Width = 410
-      Height = 21
+      Left = 84
+      Top = 8
+      Width = 532
+      Height = 23
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
       OnChange = edSearchChange
       OnKeyDown = edSearchKeyDown
     end
     object btSearchNext: TButton
-      Left = 490
-      Top = 4
-      Width = 91
-      Height = 23
+      Left = 624
+      Top = 7
+      Width = 104
+      Height = 28
       Anchors = [akTop, akRight]
       Caption = 'Pr'#243'ximo'
       TabOrder = 1
@@ -208,18 +217,28 @@ object UserPermis: TUserPermis
     end
   end
   object Panel3: TPanel
-    Left = 488
-    Top = 83
-    Width = 101
-    Height = 491
-    Align = alRight
+    Left = 0
+    Top = 525
+    Width = 752
+    Height = 56
+    Align = alBottom
     BevelOuter = bvNone
+    Padding.Left = 8
+    Padding.Top = 8
+    Padding.Right = 8
+    Padding.Bottom = 8
     TabOrder = 2
     object BtLibera: TBitBtn
       Left = 8
-      Top = 24
-      Width = 82
-      Height = 25
+      Top = 8
+      Width = 104
+      Height = 40
+      Align = alLeft
+      AlignWithMargins = True
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 6
+      Margins.Bottom = 0
       Caption = '&Liberar'
       TabOrder = 0
       OnClick = BtLiberaClick
@@ -277,10 +296,16 @@ object UserPermis: TUserPermis
       NumGlyphs = 2
     end
     object BtBloqueia: TBitBtn
-      Left = 8
-      Top = 55
-      Width = 82
-      Height = 25
+      Left = 118
+      Top = 8
+      Width = 104
+      Height = 40
+      Align = alLeft
+      AlignWithMargins = True
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 6
+      Margins.Bottom = 0
       Caption = '&Bloquear'
       TabOrder = 1
       OnClick = BtBloqueiaClick
@@ -338,10 +363,16 @@ object UserPermis: TUserPermis
       NumGlyphs = 2
     end
     object BtGrava: TBitBtn
-      Left = 8
-      Top = 86
-      Width = 82
-      Height = 25
+      Left = 530
+      Top = 8
+      Width = 104
+      Height = 40
+      Align = alRight
+      AlignWithMargins = True
+      Margins.Left = 6
+      Margins.Top = 0
+      Margins.Right = 0
+      Margins.Bottom = 0
       Caption = '&Gravar'
       TabOrder = 2
       OnClick = BtGravaClick
@@ -399,10 +430,16 @@ object UserPermis: TUserPermis
       NumGlyphs = 2
     end
     object BtCancel: TBitBtn
-      Left = 8
-      Top = 117
-      Width = 82
-      Height = 25
+      Left = 640
+      Top = 8
+      Width = 104
+      Height = 40
+      Align = alRight
+      AlignWithMargins = True
+      Margins.Left = 6
+      Margins.Top = 0
+      Margins.Right = 0
+      Margins.Bottom = 0
       Caption = '&Cancelar'
       TabOrder = 3
       OnClick = BtCancelClick
@@ -437,26 +474,32 @@ object UserPermis: TUserPermis
         4D4D4D4D4D0202020202}
     end
     object GroupBox1: TGroupBox
-      Left = 8
-      Top = 148
-      Width = 82
-      Height = 81
+      Left = 228
+      Top = 8
+      Width = 296
+      Height = 40
+      Align = alClient
+      AlignWithMargins = True
+      Margins.Left = 0
+      Margins.Top = 0
+      Margins.Right = 0
+      Margins.Bottom = 0
       Caption = 'Exemplo'
       Enabled = False
       TabOrder = 4
       object CBBloqueado: TCheckBox
-        Left = 6
-        Top = 47
-        Width = 72
+        Left = 112
+        Top = 17
+        Width = 88
         Height = 17
         Caption = 'Bloqueado'
         TabOrder = 0
       end
       object CBLiberado: TCheckBox
-        Left = 6
-        Top = 24
-        Width = 67
-        Height = 13
+        Left = 12
+        Top = 17
+        Width = 88
+        Height = 17
         Caption = 'Liberado'
         Checked = True
         State = cbChecked
@@ -466,30 +509,30 @@ object UserPermis: TUserPermis
   end
   object PC: TPageControl
     Left = 0
-    Top = 83
-    Width = 488
-    Height = 491
+    Top = 112
+    Width = 752
+    Height = 413
     ActivePage = PageMenu
     Align = alClient
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clBlack
-    Font.Height = -11
-    Font.Name = 'MS Sans Serif'
+    Font.Height = -12
+    Font.Name = 'Segoe UI'
     Font.Style = []
-    MultiLine = True
-    ParentFont = False
+    MultiLine = False
+    ParentFont = True
     TabOrder = 3
-    TabWidth = 155
     object PageMenu: TTabSheet
       Caption = 'Menu Controle de Usuarios'
       object TreeMenu: TTreeView
         Left = 0
         Top = 0
-        Width = 480
-        Height = 463
+        Width = 744
+        Height = 383
         Align = alClient
         Ctl3D = True
         Images = ImageList1
+        HideSelection = False
         Indent = 19
         ParentCtl3D = False
         PopupMenu = pmTree
@@ -507,11 +550,12 @@ object UserPermis: TUserPermis
       object TreeAction: TTreeView
         Left = 0
         Top = 0
-        Width = 480
-        Height = 463
+        Width = 744
+        Height = 383
         Align = alClient
         Ctl3D = True
         Images = ImageList1
+        HideSelection = False
         Indent = 19
         ParentCtl3D = False
         PopupMenu = pmTree
@@ -528,11 +572,12 @@ object UserPermis: TUserPermis
       object TreeControls: TTreeView
         Left = 0
         Top = 0
-        Width = 480
-        Height = 463
+        Width = 744
+        Height = 383
         Align = alClient
         Ctl3D = True
         Images = ImageList1
+        HideSelection = False
         Indent = 19
         ParentCtl3D = False
         PopupMenu = pmTree

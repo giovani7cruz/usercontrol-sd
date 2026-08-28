@@ -103,6 +103,29 @@
   colunas responsivas e exibicao traduzida do status ativo/inativo.
 - O cadastro de usuarios passa a ser redimensionavel, com campos ancorados,
   area de imagem mais clara e acoes principais posicionadas no rodape.
+- A tela de permissoes passa a ser redimensionavel, com busca destacada, arvores
+  responsivas e acoes de liberar, bloquear, gravar e cancelar no rodape.
+- A traducao da busca agora e aplicada tanto para usuarios quanto para perfis;
+  `Ctrl+F`, `F3`, `Shift+F3`, `Esc` e espaco facilitam a navegacao por teclado.
+- Corrigida a alternancia por espaco nas arvores de permissoes, que antes podia
+  atuar sobre o item sob o mouse em vez do item selecionado pelo teclado.
+- A visualizacao de logs passa a usar filtros no topo, grade responsiva e painel
+  redimensionavel para leitura e copia da mensagem completa.
+- A mensagem pode ser filtrada com Enter; datas invalidas deixam de interromper
+  o desenho da grade e os icones de nivel nao criam objetos a cada celula.
+- A substituicao do dataset de logs deixa de chamar `Close` antes da liberacao,
+  preservando o ciclo de vida definido por conexoes externas.
+- Falhas ao excluir ou auditar a exclusao de logs deixam de ser descartadas
+  silenciosamente.
+- A lista de usuarios logados passa a usar grade e colunas responsivas, botoes
+  alinhados no rodape e ordenacao estavel por usuario e atividade recente.
+- A remocao da sessao selecionada deixa de ficar escondida apenas no menu de
+  contexto, recebe confirmacao e nunca permite remover a sessao atual.
+- As acoes de remover uma ou todas as outras sessoes recebem textos traduziveis;
+  a nomenclatura esclarece que a linha e removida da lista, sem prometer logout
+  remoto da aplicacao correspondente.
+- A tela trata com seguranca a ausencia do formulario principal, de dataset ou
+  de registro selecionado e mantem o estado dos botoes sincronizado com a grade.
 
 ### Segurança
 

@@ -582,6 +582,10 @@ type
     fInputCaption: String;
     fInputText: String;
     fMsgSystem: String;
+    FBtnRemove: String;
+    FMenuRemoveAll: String;
+    FPromptRemove: String;
+    FPromptRemoveAll: String;
   public
     constructor Create(Aowner: TComponent);
     destructor Destroy; override;
@@ -600,6 +604,10 @@ type
     property InputCaption: String read fInputCaption write fInputCaption;
     property InputText: String read fInputText write fInputText;
     property MsgSystem: String read fMsgSystem write fMsgSystem;
+    property BtnRemove: String read FBtnRemove write FBtnRemove;
+    property MenuRemoveAll: String read FMenuRemoveAll write FMenuRemoveAll;
+    property PromptRemove: String read FPromptRemove write FPromptRemove;
+    property PromptRemoveAll: String read FPromptRemoveAll write FPromptRemoveAll;
   End;
 
   TUCTypeBancoDados = (Interbase, Firebird, MySql, PARADOX, Oracle, SqlServer, PostgreSQL);
@@ -1102,7 +1110,11 @@ begin
     ColData := TUCCadUserLoggedMSG(Source).ColData;
     InputCaption := TUCCadUserLoggedMSG(Source).InputCaption;
     InputText := TUCCadUserLoggedMSG(Source).InputText;
-    MsgSystem := TUCCadUserLoggedMSG(Source).MsgSystem
+    MsgSystem := TUCCadUserLoggedMSG(Source).MsgSystem;
+    BtnRemove := TUCCadUserLoggedMSG(Source).BtnRemove;
+    MenuRemoveAll := TUCCadUserLoggedMSG(Source).MenuRemoveAll;
+    PromptRemove := TUCCadUserLoggedMSG(Source).PromptRemove;
+    PromptRemoveAll := TUCCadUserLoggedMSG(Source).PromptRemoveAll;
   End
   else
     inherited;
