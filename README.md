@@ -1,103 +1,99 @@
-# User Control ShowDelphi Edition
+# UserControl GDC
 
-## Modernização do fork GDC
+Fork do User Control ShowDelphi Edition voltado à modernização do código, da
+interface e da integração com aplicações Delphi atuais.
 
-As alterações em andamento estão registradas em
-[CHANGELOG_GDC.md](CHANGELOG_GDC.md). A nova API opt-in para hash forte e o
-procedimento seguro de adoção estão descritos em
-[MIGRACAO_SEGURANCA.md](MIGRACAO_SEGURANCA.md).
+O histórico das alterações deste fork está em
+[CHANGELOG_GDC.md](CHANGELOG_GDC.md).
 
-O envio de e-mail não depende mais do Alcinoe. A configuração do transporte
-Indy e a injeção de uma implementação própria estão descritas em
-[MAIL_TRANSPORT.md](MAIL_TRANSPORT.md).
+## Status do projeto e compatibilidade
 
-Uma versão dos Componentes User Control mantido pela Comunidade Show Delphi.
-A comunidade tem o objetivo de manter esta biblioteca de componentes
-compatíveis com as novas versões do Delphi e Lazarus, realizando melhorias, sempre 
-que possível.
+O ambiente de desenvolvimento atual é o **Delphi 12 Athens**, no Windows. Isso
+indica o alvo das melhorias em andamento, mas **não representa uma matriz de
+compatibilidade certificada**.
 
-Fórum oficial: https://showdelphi.com.br/forum/forum/duvidas-e-problemas-relacionados-ao-usercontrol-showdelphi-edition/
+Neste momento:
 
-# Consultorias
+- não há uma suíte que valide automaticamente todas as versões do Delphi;
+- versões antigas do Delphi não são prioridade e podem deixar de compilar após
+  modernizações necessárias;
+- a compatibilidade com Lazarus/FPC e com conectores legados não está sendo
+  testada regularmente;
+- Win32 e Win64 devem ser validados pela aplicação que consumir a biblioteca;
+- cada atualização deve ser testada no ambiente do projeto antes de ir para
+  produção.
 
-Você pode contatar Giovani da Cruz para consultorias sobre o User Control e 
-serviços Freelancer em Delphi pelo e-mail giovani@infus.inf.br.
+Contribuições que acrescentem testes ou confirmem o funcionamento em outros
+ambientes são bem-vindas, mas uma compilação isolada não será anunciada como
+suporte oficial sem manutenção contínua.
 
-# Contribuições em Código
+## Objetivos do fork
 
-Lembre-se que você sempre pode contribuir com melhorias nos códigos, exemplos de uso e testes nas versões de Delphi.
-Caso tenha interesse em colaborar, entre em contato conosco.
+- modernizar o código para as práticas e APIs atuais do Delphi;
+- reduzir dependências antigas e remover integrações sem manutenção;
+- permitir conexão por classes da própria aplicação, sem exigir um componente
+  visual ou dependência direta de `TRESTClient`;
+- respeitar o ciclo de vida de datasets materializados por REST/RPC, evitando
+  recargas baseadas obrigatoriamente em `Close`/`Open`;
+- melhorar segurança, tratamento de erros, gerenciamento de memória e clareza
+  dos contratos;
+- atualizar as telas VCL para DPI, redimensionamento, teclado e melhor
+  usabilidade;
+- manter o instalador e os caminhos de biblioteca adequados ao Delphi atual.
 
-# Suporte
+Compatibilidade retroativa será preservada quando tiver baixo custo e não
+impedir essas melhorias, mas não é o objetivo principal deste fork.
 
-O componente tem suporte do Delphi 7 até o Delphi 11.3 Alexandria.
+## Integração com dados
 
-A partir de 12/03/2019 foi incluso a primeira versão com suporte a Lazarus.
+A integração recomendada para novas aplicações é feita por
+`IUCDataConnection` e `TUCConnectionAdapter`. Assim, o UserControl pode delegar
+consultas, comandos, atualizações e transporte de BLOBs às classes de conexão da
+própria aplicação.
 
-Versões testadas até o momento:
+Consulte [CONNECTION_ADAPTER.md](CONNECTION_ADAPTER.md) para o contrato e um
+exemplo de uso.
 
-Delphi 7
+Os conectores antigos permanecem no repositório por enquanto, mas não existe
+garantia de que todos estejam funcionais ou compatíveis com o Delphi 12.
 
-Delphi 2010
+## Segurança e serviços externos
 
-Delphi XE 3
+- [MIGRACAO_SEGURANCA.md](MIGRACAO_SEGURANCA.md) descreve a API opt-in de hash
+  forte e o procedimento de migração de senhas.
+- [MAIL_TRANSPORT.md](MAIL_TRANSPORT.md) descreve o transporte de e-mail por
+  Indy e a injeção de uma implementação própria.
+- [USERS_LOGGED.md](USERS_LOGGED.md) documenta o controle de sessões por
+  heartbeat.
 
-Delphi XE 6
+## Instalação
 
-Delphi XE 7
+O repositório inclui o `UCSWInstall.exe`. Para recompilar o instalador no
+ambiente configurado, use um dos scripts da raiz:
 
-Delphi XE 8
+- `Compilar-UCSWInstall.bat`
+- `Compilar-UCSWInstall.ps1`
 
-Delphi 10 Seattle
+O instalador configura os caminhos de biblioteca Win32 e Win64. A instalação e
+a compilação dos pacotes devem ser verificadas no Delphi 12 antes de utilizar o
+componente em uma aplicação.
 
-Delphi 10.1 Berlin
+## Contribuições
 
-Delphi 10.2 Tokyo
+Contribuições podem incluir correções, modernização, documentação, exemplos e
+testes reproduzíveis. Ao relatar compatibilidade, informe pelo menos:
 
-Delphi 10.3 Rio
+- versão e edição do Delphi;
+- plataforma alvo;
+- connector ou adapter utilizado;
+- banco de dados;
+- pacotes e fluxos efetivamente testados.
 
-Delphi 10.4 Sydney
+## Suporte e comunidade
 
-Delphi 11.3 Alexandria
+- Fórum: <https://showdelphi.com.br/forum/forum/duvidas-e-problemas-relacionados-ao-usercontrol-showdelphi-edition/>
+- Comunidade: <https://showdelphi.com.br>
+- Consultoria Delphi: Giovani da Cruz — <giovani@infus.inf.br>
 
-Delphi 12 Athens
-
--------------------------------------------------------------
-
-Lazarus 2.0 (Beta)  
-
-Obs: Quem estiver utilizando a versão Starter (Community) do Delphi, precisa realizar a instalação manualmente,
-pois o delphi não gera as bpls se você utilizar o instalador.
-Lembramos também que o Berlin Starter, por padrão, não tem componentes de conexão instalados, logo
-recomendamos a instalação do Zeos que é Open Source, assim será possível de utilizar o UserControl. 
-
-Conectors Suportados até o momento:
-ADOConnector, IBXConnector, DBXConnector, FireDACConnector, ZeosConnector, DataSnapConnector,
-RestConnector, RestDWConnector (Versão Datasnap), Rest Data Ware CORE Connector, SQLdb (Somente no Lazarus).
-
-Alguns detalhes:
-
-ZeosConnector está disponível para Delphi e Lazarus
-RestConnector faz uso de funções do Firedac, logo é necessário que o FireDac esteja instalado.
-RestDWConnector foi preparado para utilizar o RestWare, versão inicial do RestDataWare que utilizava o DataSnap.
-Rest Data Ware CORE Connector é o connectaor indicado para a utilização com o REST DATA WARE CORE.
-
-O Midas Connector é somente até o Delphi XE 8.
-
-Há ainda outros connectors na pasta "conectors para testar", no entando estes connector não foram
-testados pela nossa equipe.
-Lista dos connectors para teste:
-AboluteBase, AstaConn, BDEConn, DBISAMConn, FIBConn, IBOConn, MDOConn, MyDACConn,
-NexusDBConn, ODACConn, UIBConn, UniDACConn.
-
-O componente UserControl é compatível com a compilação em 64 bits, inclusive em Lazarus.
-
-Para ver uma descrição completa dos componentes acesse: https://showdelphi.com.br/descricao-dos-componentes-usercontrol/
-
-Caso queria baixar o RestWare versão Datasnap que mantemos, acesse: https://github.com/infussolucoes/Datasnap-Restware
-
-Visite a comunidade: https://showdelphi.com.br
-
-Visite o blog: https://giovanidacruz.com.br
-
-
+O projeto é distribuído nos termos da licença presente em
+[licenca.txt](licenca.txt).
